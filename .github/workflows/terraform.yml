@@ -35,16 +35,34 @@ jobs:
     - name: Apply Terraform configuration
       run: terraform apply -auto-approve
 
-    - name: Extract Kubernetes Cluster Name
-      id: cluster_name
-      run: echo "name=$(terraform output -raw kubernetes_cluster_name)" >> $GITHUB_ENV
+    - name: Get GKE Cluster Credentials
+      run: gcloud container clusters get-credentials example-cluster --zone us-central1-c --project ${{ secrets.GCP_PROJECT_ID }}
 
-    - name: Set up kubectl
+    - name: Run CLI Tool on GKE Cluster
+      id: cli_output
       run: |
-        gcloud container clusters get-credentials $(terraform output -raw kubernetes_cluster_name) --region us-central1
-        echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
+        output=$(kubectl get nodes -o wide)
+        echo "CLI tool output:"
+        echo "$output"
+        echo "$output" > cli_output.txt
+        echo "::set-output name=cli_output::$output"
 
-    # - name: Run CLI tool
+    # - name: Checkout Wiki Repository
+    #   uses: actions/checkout@v3
+    #   with:
+    #     repository: yourusername/your-repo.wiki
+    #     path: ./wiki
+
+    # - name: Update Wiki with CLI Output
     #   run: |
-    #     # Replace 'your-cli-tool' with the actual CLI tool you want to run
-    #     your-cli-tool --option value
+    #     echo "## CLI Tool Output" > ./wiki/CLI-Tool-Output.md
+    #     echo "${{ steps.cli_output.outputs.cli_output }}" >> ./wiki/CLI-Tool-Output.md
+
+    # - name: Commit and Push Changes
+    #   run: |
+    #     cd wiki
+    #     git config --local user.email "action@github.com"
+    #     git config --local user.name "GitHub Action"
+    #     git add CLI-Tool-Output.md
+    #     git commit -m "Update CLI Tool Output"
+    #     git push
