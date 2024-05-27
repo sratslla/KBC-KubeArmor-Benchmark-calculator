@@ -35,6 +35,10 @@ jobs:
     - name: Apply Terraform configuration
       run: terraform apply -auto-approve
 
+    - name: Extract Kubernetes Cluster Name
+      id: cluster_name
+      run: echo "name=$(terraform output -raw kubernetes_cluster_name)" >> $GITHUB_ENV
+
     - name: Set up kubectl
       run: |
         gcloud container clusters get-credentials $(terraform output -raw kubernetes_cluster_name) --region us-central1
