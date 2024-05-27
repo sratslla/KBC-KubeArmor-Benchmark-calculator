@@ -5,7 +5,7 @@ provider "google" {
 
 resource "google_container_cluster" "primary" {
   name               = "example-cluster"
-  zone           = "us-central1-c"
+  location           = "us-central1-c"
   initial_node_count = 1
 
   node_config {
@@ -15,7 +15,7 @@ resource "google_container_cluster" "primary" {
 
 resource "google_container_node_pool" "primary_nodes" {
   cluster    = google_container_cluster.primary.name
-  location   = google_container_cluster.primary.zone
+  location   = google_container_cluster.primary.location
   node_count = 3
 
   node_config {
@@ -25,14 +25,14 @@ resource "google_container_node_pool" "primary_nodes" {
 
 resource "google_container_node_pool" "tainted_node" {
   cluster    = google_container_cluster.primary.name
-  location   = google_container_cluster.primary.zone
+  location   = google_container_cluster.primary.location
   node_count = 1
 
   node_config {
     machine_type = "e2-standard-4"
     taint {
-      key    = "color"
-      value  = "blue"
+      key    = "example-taint"
+      value  = "true"
       effect = "NO_SCHEDULE"
     }
   }
