@@ -45,7 +45,9 @@ jobs:
         echo "CLI tool output:"
         echo "$output"
         echo "$output" > cli_output.txt
+        echo "CLI_OUTPUT<<EOF" >> $GITHUB_ENV
         echo "$output" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
 
     - name: Checkout Wiki Repository
       uses: actions/checkout@v3
