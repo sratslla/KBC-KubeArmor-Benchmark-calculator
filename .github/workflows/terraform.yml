@@ -45,24 +45,29 @@ jobs:
         echo "CLI tool output:"
         echo "$output"
         echo "$output" > cli_output.txt
-        echo "::set-output name=cli_output::$output"
+        echo "$output" >> $GITHUB_ENV
 
-    # - name: Checkout Wiki Repository
-    #   uses: actions/checkout@v3
-    #   with:
-    #     repository: yourusername/your-repo.wiki
-    #     path: ./wiki
+    - name: Checkout Wiki Repository
+      uses: actions/checkout@v3
+      with:
+        repository: sratslla/KBC-KubeArmor-Benchmark-calculator.wiki
+        path: ./wiki
+    
+    - name: Configure Git
+      run: |
+        git config --global user.email "action@github.com"
+        git config --global user.name "GitHub Action"
 
-    # - name: Update Wiki with CLI Output
-    #   run: |
-    #     echo "## CLI Tool Output" > ./wiki/CLI-Tool-Output.md
-    #     echo "${{ steps.cli_output.outputs.cli_output }}" >> ./wiki/CLI-Tool-Output.md
+    - name: Update Wiki with CLI Output
+      run: |
+        echo "## CLI Tool Output" > ./wiki/CLI-Tool-Output.md
+        echo "$CLI_OUTPUT" >> ./wiki/CLI-Tool-Output.md
 
-    # - name: Commit and Push Changes
-    #   run: |
-    #     cd wiki
-    #     git config --local user.email "action@github.com"
-    #     git config --local user.name "GitHub Action"
-    #     git add CLI-Tool-Output.md
-    #     git commit -m "Update CLI Tool Output"
-    #     git push
+    - name: Commit and Push Changes
+      env:
+        GH_PAT: ${{ secrets.GH_PAT }}
+      run: |
+        cd wiki
+        git add CLI-Tool-Output.md
+        git commit -m "Update CLI Tool Output"
+        git push https://sratslla:${{ secrets.GH_PAT }}@github.com/sratslla/KBC-KubeArmor-Benchmark-calculator.wiki.git
