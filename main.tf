@@ -6,7 +6,7 @@ provider "google" {
 resource "google_container_cluster" "primary" {
   name               = "example-cluster"
   location           = "us-central1-c"
-  initial_node_count = 1
+  initial_node_count = 0
 
   node_config {
     machine_type = "e2-standard-4"
