@@ -6,17 +6,12 @@ provider "google" {
 resource "google_container_cluster" "primary" {
   name               = "example-cluster"
   location           = "us-central1-c"
-  initial_node_count = 1
-
-  node_config {
-    machine_type = "e2-custom-2-4096"
-  }
 }
 
 resource "google_container_node_pool" "primary_nodes" {
   cluster    = google_container_cluster.primary.name
   location   = google_container_cluster.primary.location
-  node_count = 2
+  node_count = 3
 
   node_config {
     machine_type = "e2-custom-2-4096"
@@ -31,8 +26,8 @@ resource "google_container_node_pool" "tainted_node" {
   node_config {
     machine_type = "e2-standard-4"
     taint {
-      key    = "example-taint"
-      value  = "true"
+      key    = "color"
+      value  = "blue"
       effect = "NO_SCHEDULE"
     }
   }
