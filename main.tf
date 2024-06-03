@@ -6,6 +6,8 @@ provider "google" {
 resource "google_container_cluster" "primary" {
   name               = "example-cluster"
   location           = "us-central1-c"
+  initial_node_count        = 1
+  remove_default_node_pool  = true
 }
 
 resource "google_container_node_pool" "primary_nodes" {
