@@ -5,11 +5,17 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/spf13/cobra"
+
+	"github.com/prometheus/client_golang/api"
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/common/model"
 )
 
 var startCmd = &cobra.Command{
@@ -48,6 +54,22 @@ var startCmd = &cobra.Command{
 			fmt.Println("Error applying manifest:", err)
 			os.Exit(1)
 		}
+
+		// prometheusURL := "http://192.168.88.129:30000"
+		// promClient, err := NewPrometheusClient(prometheusURL)
+		// if err != nil {
+		// 	fmt.Println("Error creating Prometheus client:", err)
+		// 	return
+		// }
+
+		// query := `sum(rate(container_cpu_usage_seconds_total{pod=~"frontend-.*", container = "", namespace="default"}[1m]))`
+		// result, err := QueryPrometheus(promClient, query)
+		// if err != nil {
+		// 	fmt.Println("Error querying Prometheus:", err)
+		// 	return
+		// }
+
+		// fmt.Println("Query result:", result)
 	},
 }
 
@@ -77,4 +99,25 @@ func applyManifestFromGitHub(repoURL, yamlFilePath string) error {
 	}
 	fmt.Println("Manifest applied successfully.", output.String())
 	return nil
+}
+
+func NewPrometheusClient(prometheusURL string) (v1.API, error) {
+	client, err := api.NewClient(api.Config{
+		Address: prometheusURL,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return v1.NewAPI(client), nil
+}
+
+func QueryPrometheus(api v1.API, query string) (model.Value, error) {
+	result, warnings, err := api.Query(context.Background(), query, time.Now())
+	if err != nil {
+		return nil, err
+	}
+	if len(warnings) > 0 {
+		fmt.Println("Warnings received during query execution:", warnings)
+	}
+	return result, nil
 }

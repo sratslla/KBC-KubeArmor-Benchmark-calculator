@@ -196,11 +196,6 @@ spec:
           runAsUser: 65534
           seccompProfile:
             type: RuntimeDefault
-      tolerations:
-      - key: color
-        operator: Equal
-        value: blue
-        effect: NoSchedule
       nodeSelector:
         kubernetes.io/os: linux
       serviceAccountName: kube-state-metrics
