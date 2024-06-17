@@ -55,21 +55,23 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// prometheusURL := "http://192.168.88.129:30000"
-		// promClient, err := NewPrometheusClient(prometheusURL)
-		// if err != nil {
-		// 	fmt.Println("Error creating Prometheus client:", err)
-		// 	return
-		// }
+		time.Sleep(200 * time.Second)
 
-		// query := `sum(rate(container_cpu_usage_seconds_total{pod=~"frontend-.*", container = "", namespace="default"}[1m]))`
-		// result, err := QueryPrometheus(promClient, query)
-		// if err != nil {
-		// 	fmt.Println("Error querying Prometheus:", err)
-		// 	return
-		// }
+		prometheusURL := "http://192.168.88.129:30000"
+		promClient, err := NewPrometheusClient(prometheusURL)
+		if err != nil {
+			fmt.Println("Error creating Prometheus client:", err)
+			return
+		}
 
-		// fmt.Println("Query result:", result)
+		query := `sum(rate(container_cpu_usage_seconds_total{pod=~"frontend-.*", container = "", namespace="default"}[1m]))`
+		result, err := QueryPrometheus(promClient, query)
+		if err != nil {
+			fmt.Println("Error querying Prometheus:", err)
+			return
+		}
+
+		fmt.Println("Query result:", result)
 	},
 }
 

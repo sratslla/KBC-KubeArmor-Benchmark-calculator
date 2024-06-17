@@ -32,7 +32,22 @@ resource "google_container_node_pool" "tainted_node" {
       value  = "blue"
       effect = "NO_SCHEDULE"
     }
+    labels = {
+      nodetype = "node1"
+    }
   }
+}
+
+resource "google_compute_firewall" "allow_node_port"{
+  name    = "test-node-port"
+  network = google_container_cluster.primary.network
+
+  allow {
+    protocol = "tcp"
+    ports    = ["30000", "30001"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
 }
 
 output "kubernetes_cluster_name" {
