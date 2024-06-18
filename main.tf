@@ -40,7 +40,7 @@ resource "google_container_node_pool" "tainted_node" {
 
 resource "google_compute_firewall" "allow_node_port"{
   name    = "test-node-port"
-  network = google_container_cluster.primary.network
+  network = "default"
 
   allow {
     protocol = "tcp"
