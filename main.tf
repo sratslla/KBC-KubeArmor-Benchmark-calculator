@@ -3,6 +3,10 @@ provider "google" {
   region  = "us-central1"
 }
 
+resource "random_id" "suffix" {
+  byte_length = 4
+}
+
 resource "google_container_cluster" "primary" {
   name               = "example-cluster"
   location           = "us-central1-c"
