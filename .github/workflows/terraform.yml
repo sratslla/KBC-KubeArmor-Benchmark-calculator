@@ -41,6 +41,7 @@ jobs:
     - name: Run CLI Tool on GKE Cluster
       id: cli_output
       run: |
+        rm -rf ./KBC-KubeArmor-Benchmark-calculator
         git clone https://github.com/sratslla/KBC-KubeArmor-Benchmark-calculator.git
         cd KBC-KubeArmor-Benchmark-calculator
         go build -o KBC
