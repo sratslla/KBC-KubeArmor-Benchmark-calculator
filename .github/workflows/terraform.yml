@@ -41,11 +41,14 @@ jobs:
     - name: Run CLI Tool on GKE Cluster
       id: cli_output
       run: |
-        output=$(kubectl get nodes -o wide)
-        echo "CLI tool output:"
+        git clone https://github.com/sratslla/KBC-KubeArmor-Benchmark-calculator.git
+        cd KBC-KubeArmor-Benchmark-calculator
+        go build -o KBC
+        output=$(./KBC start)
+        echo "KBC tool output:"
         echo "$output"
-        echo "$output" > cli_output.txt
-        echo "CLI_OUTPUT<<EOF" >> $GITHUB_ENV
+        echo "$output" > kbc_output.txt
+        echo "KBC_OUTPUT<<EOF" >> $GITHUB_ENV
         echo "$output" >> $GITHUB_ENV
         echo "EOF" >> $GITHUB_ENV
 
@@ -71,6 +74,6 @@ jobs:
         GH_PAT: ${{ secrets.GH_PAT }}
       run: |
         cd wiki
-        git add CLI-Tool-Output.md
-        git commit -m "Update CLI Tool Output"
+        git add KBC-Tool-Output.md
+        git commit -m "Update KBC Tool Output"
         git push https://GH_PAT@github.com/sratslla/KBC-KubeArmor-Benchmark-calculator.wiki.git
