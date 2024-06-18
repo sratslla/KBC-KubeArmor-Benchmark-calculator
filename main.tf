@@ -39,7 +39,7 @@ resource "google_container_node_pool" "tainted_node" {
 }
 
 resource "google_compute_firewall" "allow_node_port"{
-  name    = "test-node-port"
+  name    = "test-node-port-${random_id.suffix.hex}"
   network = "default"
 
   allow {
@@ -48,6 +48,8 @@ resource "google_compute_firewall" "allow_node_port"{
   }
 
   source_ranges = ["0.0.0.0/0"]
+
+  depends_on = [google_container_cluster.primary]
 }
 
 output "kubernetes_cluster_name" {
