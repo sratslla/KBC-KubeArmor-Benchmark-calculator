@@ -6,6 +6,7 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -57,7 +58,13 @@ var startCmd = &cobra.Command{
 
 		time.Sleep(200 * time.Second)
 
-		prometheusURL := "http://192.168.88.129:30000"
+		externalIP, err := getExternalIP()
+		if err != nil {
+			fmt.Println("Error getting external IP:", err)
+			return
+		}
+
+		prometheusURL := fmt.Sprintf("http://%s:30000", externalIP)
 		promClient, err := NewPrometheusClient(prometheusURL)
 		if err != nil {
 			fmt.Println("Error creating Prometheus client:", err)
@@ -122,4 +129,41 @@ func QueryPrometheus(api v1.API, query string) (model.Value, error) {
 		fmt.Println("Warnings received during query execution:", warnings)
 	}
 	return result, nil
+}
+
+func getExternalIP() (string, error) {
+	cmd := exec.Command("kubectl", "get", "nodes", "-o", "json")
+
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	err := cmd.Run()
+	if err != nil {
+		return "", fmt.Errorf("error getting nodes: %v", err)
+	}
+
+	var nodes struct {
+		Items []struct {
+			Status struct {
+				Addresses []struct {
+					Type    string `json:"type"`
+					Address string `json:"address"`
+				} `json:"addresses"`
+			} `json:"status"`
+		} `json:"items"`
+	}
+
+	err = json.Unmarshal(output.Bytes(), &nodes)
+	if err != nil {
+		return "", fmt.Errorf("error unmarshalling nodes JSON: %v", err)
+	}
+
+	for _, node := range nodes.Items {
+		for _, address := range node.Status.Addresses {
+			if address.Type == "ExternalIP" {
+				return address.Address, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("no external IP found")
 }
