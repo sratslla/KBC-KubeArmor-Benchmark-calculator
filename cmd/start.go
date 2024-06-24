@@ -1,6 +1,3 @@
-/*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -42,17 +39,17 @@ var startCmd = &cobra.Command{
 		}
 		err2 := applyManifestFromGitHub(REPO_URL, YAML_FILE_PATH2)
 		if err2 != nil {
-			fmt.Println("Error applying manifest:", err)
+			fmt.Println("Error applying manifest:", err2)
 			os.Exit(1)
 		}
 		err3 := applyManifestFromGitHub(REPO_URL, YAML_FILE_PATH3)
 		if err3 != nil {
-			fmt.Println("Error applying manifest:", err)
+			fmt.Println("Error applying manifest:", err3)
 			os.Exit(1)
 		}
 		err4 := applyManifestFromGitHub(REPO_URL, YAML_FILE_PATH4)
 		if err4 != nil {
-			fmt.Println("Error applying manifest:", err)
+			fmt.Println("Error applying manifest:", err4)
 			os.Exit(1)
 		}
 
@@ -72,19 +69,27 @@ var startCmd = &cobra.Command{
 		}
 
 		query := `sum(rate(container_cpu_usage_seconds_total{pod=~"frontend-.*", container = "", namespace="default"}[1m]))`
-		result, err := QueryPrometheus(promClient, query)
+		cpuResult, err := QueryPrometheus(promClient, query)
 		if err != nil {
-			fmt.Println("Error querying Prometheus:", err)
+			fmt.Println("Error querying Prometheus for CPU metrics:", err)
 			return
 		}
+		fmt.Println("CPU Query result:", cpuResult)
 
-		fmt.Println("Query result:", result)
+		locustQuery := `locust_users{job="locust"}`
+		locustResult, err := QueryPrometheus(promClient, locustQuery)
+		if err != nil {
+			fmt.Println("Error querying Prometheus for Locust metrics:", err)
+			return
+		}
+		fmt.Println("Locust Query result:", locustResult)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(startCmd)
 }
+
 func isKubernetesClusterRunning() bool {
 	cmd := exec.Command("kubectl", "cluster-info")
 
@@ -104,7 +109,7 @@ func applyManifestFromGitHub(repoURL, yamlFilePath string) error {
 	cmd.Stdout = &output
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("error applying manifest: %v\n%s", output.String())
+		return fmt.Errorf("error applying manifest: %v\n%s", err, output.String())
 	}
 	fmt.Println("Manifest applied successfully.", output.String())
 	return nil
