@@ -168,8 +168,9 @@ data:
           action: replace
           target_label: kubernetes_name
       - job_name: 'locust'
+        scrape_interval: 2s
         static_configs:
-          - targets: ['localhost:9646']
+          - targets: ['loadgenerator:9646']
 ---
 apiVersion: apps/v1
 kind: Deployment

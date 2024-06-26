@@ -144,6 +144,12 @@ spec:
           value: "frontend:80"
         - name: USERS
           value: "10"
+        ports:
+        - containerPort: 8089 # Locust UI port
+      - name: locust-exporter
+        image: containersol/locust_exporter
+        ports:
+        - containerPort: 9646 # Locust Exporter metrics port
       tolerations:
       - key: color
         operator: Equal
@@ -151,6 +157,21 @@ spec:
         effect: NoSchedule
       nodeSelector:
         nodetype: node1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loadgenerator
+  labels:
+    app: loadgenerator
+spec:
+  selector:
+    app: loadgenerator
+  ports:
+  - port: 8089
+    targetPort: 8089
+  - port: 9646
+    targetPort: 9646
 ---
 apiVersion: v1
 kind: ServiceAccount

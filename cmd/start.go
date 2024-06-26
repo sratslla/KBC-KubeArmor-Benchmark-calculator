@@ -76,13 +76,13 @@ var startCmd = &cobra.Command{
 		}
 		fmt.Println("CPU Query result:", cpuResult)
 
-		locustQuery := `locust_users{job="locust"}`
-		locustResult, err := QueryPrometheus(promClient, locustQuery)
-		if err != nil {
-			fmt.Println("Error querying Prometheus for Locust metrics:", err)
-			return
-		}
-		fmt.Println("Locust Query result:", locustResult)
+		// locustQuery := `locust_users{job="locust"}`
+		// locustResult, err := QueryPrometheus(promClient, locustQuery)
+		// if err != nil {
+		// 	fmt.Println("Error querying Prometheus for Locust metrics:", err)
+		// 	return
+		// }
+		// fmt.Println("Locust Query result:", locustResult)
 	},
 }
 
