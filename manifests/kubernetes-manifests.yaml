@@ -168,9 +168,11 @@ spec:
   selector:
     app: loadgenerator
   ports:
-  - port: 8089
+  - name: locust-ui
+    port: 8089
     targetPort: 8089
-  - port: 9646
+  - name: locust-exporter
+    port: 9646
     targetPort: 9646
 ---
 apiVersion: v1
