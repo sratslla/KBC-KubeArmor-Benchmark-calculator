@@ -170,7 +170,7 @@ data:
       - job_name: 'locust'
         scrape_interval: 2s
         static_configs:
-          - targets: ['loadgenerator:9646']
+          - targets: ['loadgenerator.default.svc.cluster.local:9646']
 ---
 apiVersion: apps/v1
 kind: Deployment
