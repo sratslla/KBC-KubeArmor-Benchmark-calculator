@@ -52,6 +52,11 @@ var startCmd = &cobra.Command{
 			fmt.Println("Error applying manifest:", err4)
 			os.Exit(1)
 		}
+		// ticker := time.NewTicker(5 * time.Second)
+		// defer ticker.Stop()
+
+		// done := make(chan bool)
+		// condition := false
 
 		time.Sleep(200 * time.Second)
 
@@ -76,13 +81,13 @@ var startCmd = &cobra.Command{
 		}
 		fmt.Println("CPU Query result:", cpuResult)
 
-		// locustQuery := `locust_users{job="locust"}`
-		// locustResult, err := QueryPrometheus(promClient, locustQuery)
-		// if err != nil {
-		// 	fmt.Println("Error querying Prometheus for Locust metrics:", err)
-		// 	return
-		// }
-		// fmt.Println("Locust Query result:", locustResult)
+		locustQuery := `locust_users{job="locust"}`
+		locustResult, err := QueryPrometheus(promClient, locustQuery)
+		if err != nil {
+			fmt.Println("Error querying Prometheus for Locust metrics:", err)
+			return
+		}
+		fmt.Println("Locust Query result:", locustResult)
 	},
 }
 
