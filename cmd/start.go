@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -45,11 +46,20 @@ var startCmd = &cobra.Command{
 			fmt.Println("Error applying manifest:", err4)
 			os.Exit(1)
 		}
-		// ticker := time.NewTicker(5 * time.Second)
-		// defer ticker.Stop()
 
-		// done := make(chan bool)
-		// condition := false
+		time.Sleep(30 * time.Second)
+
+		autoscaleDeployment("cartservice", 50, 2, 400)
+		autoscaleDeployment("currencyservice", 50, 2, 400)
+		autoscaleDeployment("emailservice", 50, 2, 400)
+		autoscaleDeployment("checkoutservice", 50, 2, 400)
+		autoscaleDeployment("frontend", 50, 5, 400)
+		autoscaleDeployment("paymentservice", 50, 2, 400)
+		autoscaleDeployment("productcatalogservice", 50, 2, 400)
+		autoscaleDeployment("recommendationservice", 50, 2, 400)
+		autoscaleDeployment("redis-cart", 50, 1, 400)
+		autoscaleDeployment("shippingservice", 50, 2, 400)
+		autoscaleDeployment("adservice", 50, 1, 400)
 	},
 }
 
@@ -80,4 +90,20 @@ func applyManifestFromGitHub(repoURL, yamlFilePath string) error {
 	}
 	fmt.Println("Manifest applied successfully.", output.String())
 	return nil
+}
+
+func autoscaleDeployment(deploymentName string, cpuPercent, minReplicas, maxReplicas int) {
+	cmd := exec.Command("kubectl", "autoscale", "deployment", deploymentName,
+		fmt.Sprintf("--cpu-percent=%d", cpuPercent),
+		fmt.Sprintf("--min=%d", minReplicas),
+		fmt.Sprintf("--max=%d", maxReplicas))
+
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	err := cmd.Run()
+	if err != nil {
+		fmt.Printf("Error autoscaling deployment %s: %v\n%s", deploymentName, err, output.String())
+	} else {
+		fmt.Printf("Deployment %s autoscaled successfully.\n", deploymentName)
+	}
 }

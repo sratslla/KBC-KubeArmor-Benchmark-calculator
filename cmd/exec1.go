@@ -40,43 +40,39 @@ var exec1Cmd = &cobra.Command{
 
 		locustQuery := `locust_users{job="locust"}`
 
-		ticker := time.NewTicker(30 * time.Second)
+		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
 
 		loadingChars := []string{"|", "/", "-", "\\"}
 		loadingIndex := 0
 
-		for {
-			select {
-			case <-ticker.C:
-				// Query Prometheus for Locust metrics
-				locustResult, err := QueryPrometheus(promClient, locustQuery)
-				if err != nil {
-					fmt.Println("Error querying Prometheus for Locust metrics:", err)
-					return
-				}
-				fmt.Printf("\rLocust Query result: %s", locustResult)
-
-				// Check if locust_users has reached 1000
-				locustUsers := 0
-				if locustResult.Type() == model.ValVector {
-					vector := locustResult.(model.Vector)
-					for _, sample := range vector {
-						locustUsers += int(sample.Value)
-					}
-				}
-
-				if locustUsers == 1000 {
-					break
-				}
-
-				// Loading animation
-				fmt.Printf("\rWaiting for locust_users to reach 1000 %s", loadingChars[loadingIndex])
-				loadingIndex = (loadingIndex + 1) % len(loadingChars)
+		for range ticker.C {
+			locustResult, err := QueryPrometheus(promClient, locustQuery)
+			if err != nil {
+				fmt.Println("Error querying Prometheus for Locust metrics:", err)
+				return
 			}
+
+			// Parse locust users count from the query result
+			locustUsers := 0
+			if locustResult.Type() == model.ValVector {
+				vector := locustResult.(model.Vector)
+				for _, sample := range vector {
+					locustUsers = int(sample.Value)
+					fmt.Printf("locustUsers %v", locustUsers)
+				}
+			}
+
+			if locustUsers >= 100 {
+				break
+			}
+
+			// Display loading animation
+			fmt.Printf("\rWaiting for locust_users to reach 1000 %s", loadingChars[loadingIndex])
+			loadingIndex = (loadingIndex + 1) % len(loadingChars)
 		}
 
-		time.Sleep(180 * time.Second)
+		time.Sleep(120 * time.Second)
 		query := `sum(rate(container_cpu_usage_seconds_total{pod=~"frontend-.*", container = "", namespace="default"}[1m]))`
 		cpuResult, err := QueryPrometheus(promClient, query)
 		if err != nil {
