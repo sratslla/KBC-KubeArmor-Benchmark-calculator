@@ -43,9 +43,6 @@ var exec1Cmd = &cobra.Command{
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
 
-		loadingChars := []string{"|", "/", "-", "\\"}
-		loadingIndex := 0
-
 		for range ticker.C {
 			locustResult, err := QueryPrometheus(promClient, locustQuery)
 			if err != nil {
@@ -64,22 +61,49 @@ var exec1Cmd = &cobra.Command{
 			}
 
 			if locustUsers >= 100 {
+				fmt.Println("locust users reached. data will be fetched now to calculate avg benchmark.")
 				break
 			}
 
 			// Display loading animation
-			fmt.Printf("\rWaiting for locust_users to reach 1000 %s", loadingChars[loadingIndex])
-			loadingIndex = (loadingIndex + 1) % len(loadingChars)
+			fmt.Printf("\rWaiting for locust_users to reach 1000 ")
 		}
 
-		time.Sleep(120 * time.Second)
-		query := `sum(rate(container_cpu_usage_seconds_total{pod=~"frontend-.*", container = "", namespace="default"}[1m]))`
-		cpuResult, err := QueryPrometheus(promClient, query)
-		if err != nil {
-			fmt.Println("Error querying Prometheus for CPU metrics:", err)
-			return
+		time.Sleep(2 * time.Minute)
+
+		// Now we will query the CPU usage every minute for the next 10 minutes
+		cpuQuery := `sum(rate(container_cpu_usage_seconds_total{pod=~"frontend-.*", container = "", namespace="default"}[1m]))`
+		cpuResults := make([]float64, 0, 10)
+
+		cpuTicker := time.NewTicker(1 * time.Minute)
+		defer cpuTicker.Stop()
+
+		for i := 0; i < 10; i++ {
+			<-cpuTicker.C
+
+			cpuResult, err := QueryPrometheus(promClient, cpuQuery)
+			if err != nil {
+				fmt.Println("Error querying Prometheus for CPU metrics:", err)
+				return
+			}
+
+			// Parse CPU usage from the query result
+			if cpuResult.Type() == model.ValVector {
+				vector := cpuResult.(model.Vector)
+				for _, sample := range vector {
+					cpuResults = append(cpuResults, float64(sample.Value))
+				}
+			}
 		}
-		fmt.Println("CPU Query result:", cpuResult)
+		fmt.Println(cpuResults)
+		// Calculate the average CPU usage over the 10 minutes
+		var sum float64
+		for _, value := range cpuResults {
+			sum += value
+		}
+		avgCPUUsage := sum / float64(len(cpuResults))
+
+		fmt.Printf("\nAverage CPU usage over the last 10 minutes: %f\n", avgCPUUsage)
 
 		locustResult, err := QueryPrometheus(promClient, locustQuery)
 		if err != nil {
