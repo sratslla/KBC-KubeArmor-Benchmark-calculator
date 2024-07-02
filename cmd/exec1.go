@@ -50,7 +50,6 @@ var exec1Cmd = &cobra.Command{
 				return
 			}
 
-			// Parse locust users count from the query result
 			locustUsers := 0
 			if locustResult.Type() == model.ValVector {
 				vector := locustResult.(model.Vector)
@@ -65,13 +64,12 @@ var exec1Cmd = &cobra.Command{
 				break
 			}
 
-			// Display loading animation
 			fmt.Printf("\rWaiting for locust_users to reach 1000 ")
 		}
 
 		time.Sleep(2 * time.Minute)
 
-		// Now we will query the CPU usage every minute for the next 10 minutes
+		// query minute for the next 10 minutes
 		cpuQuery := `sum(rate(container_cpu_usage_seconds_total{pod=~"frontend-.*", container = "", namespace="default"}[1m]))`
 		cpuResults := make([]float64, 0, 10)
 
@@ -87,7 +85,6 @@ var exec1Cmd = &cobra.Command{
 				return
 			}
 
-			// Parse CPU usage from the query result
 			if cpuResult.Type() == model.ValVector {
 				vector := cpuResult.(model.Vector)
 				for _, sample := range vector {
@@ -96,7 +93,6 @@ var exec1Cmd = &cobra.Command{
 			}
 		}
 		fmt.Println(cpuResults)
-		// Calculate the average CPU usage over the 10 minutes
 		var sum float64
 		for _, value := range cpuResults {
 			sum += value
