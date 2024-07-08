@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -46,8 +45,6 @@ var startCmd = &cobra.Command{
 			fmt.Println("Error applying manifest:", err4)
 			os.Exit(1)
 		}
-
-		time.Sleep(30 * time.Second)
 
 		autoscaleDeployment("cartservice", 50, 2, 400)
 		autoscaleDeployment("currencyservice", 50, 2, 400)

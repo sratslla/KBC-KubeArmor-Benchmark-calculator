@@ -44,9 +44,27 @@ var exec2Cmd = &cobra.Command{
 			}
 			replicasMap[deployment] = replicas
 		}
+
 		for deployment, replicas := range replicasMap {
 			fmt.Printf("%s: %d replicas\n", deployment, replicas)
 		}
+
+		for _, deployment := range deployments {
+			err := deleteHPA(deployment)
+			if err != nil {
+				fmt.Printf("Error deleting HPA for %s: %v\n", deployment, err)
+				continue
+			}
+		}
+
+		for deployment, replicas := range replicasMap {
+			err := scaleDeployment(deployment, replicas)
+			if err != nil {
+				fmt.Printf("Error svaling deployment %s to %d replicas: %v\n", deployment, replicas, err)
+				continue
+			}
+		}
+
 	},
 }
 
@@ -67,4 +85,28 @@ func getCurrentReplicas(deploymentName string) (int, error) {
 		return 0, fmt.Errorf("error unmarshalling current replicas: %v", err)
 	}
 	return replicas, nil
+}
+
+func scaleDeployment(deploymentName string, replicas int) error {
+	cmd := exec.Command("kubectl", "scale", "deployment", deploymentName, fmt.Sprintf("--replicas=%d", replicas))
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error scaling deployment: %v\n%s", err, output.String())
+	}
+	fmt.Printf("Deployment %s scaled to %d replicas successfully.\n", deploymentName, replicas)
+	return nil
+}
+
+func deleteHPA(deploymentName string) error {
+	cmd := exec.Command("kubectl", "delete", "hpa", deploymentName)
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error deleting HPA: %v\n%s", err, output.String())
+	}
+	fmt.Printf("HPA for %s deleted successfully.\n", deploymentName)
+	return nil
 }
