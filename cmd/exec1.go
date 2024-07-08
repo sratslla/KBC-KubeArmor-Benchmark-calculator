@@ -21,7 +21,7 @@ import (
 var exec1Cmd = &cobra.Command{
 	Use:   "exec1",
 	Short: "A brief description of your command",
-	Long:  `This will check when the users become 1000 and after that this will bring us the throughput, cpu and memory.`,
+	Long:  `This will check when the users become 500 and after that this will bring us the throughput, cpu and memory.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("exec1 called")
 
@@ -59,7 +59,7 @@ var exec1Cmd = &cobra.Command{
 				}
 			}
 
-			if locustUsers >= 100 {
+			if locustUsers >= 500 {
 				fmt.Println("locust users reached. data will be fetched now to calculate avg benchmark.")
 				break
 			}

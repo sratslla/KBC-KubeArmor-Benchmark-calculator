@@ -16,7 +16,7 @@ import (
 var exec2Cmd = &cobra.Command{
 	Use:   "exec2",
 	Short: "A brief description of your command",
-	Long:  `This will keep the replicaset constant and install kubearmor.`,
+	Long:  `This will keep the replicaset constant, remove the hpa and install kubearmor.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("exec2 called")
 

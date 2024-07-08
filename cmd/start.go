@@ -11,8 +11,8 @@ import (
 
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "Start the benchmark process",
-	Long:  `Start the benchmark process`,
+	Short: "Start the benchmark process and apply all the relevant resources.",
+	Long:  `Start the benchmark process and apply all the relevant resources.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("start called")
 		if isKubernetesClusterRunning() {
