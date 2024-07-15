@@ -21,7 +21,7 @@ import (
 var exec1Cmd = &cobra.Command{
 	Use:   "exec1",
 	Short: "A brief description of your command",
-	Long:  `This will check when the users become 500 and after that this will bring us the throughput, cpu and memory.`,
+	Long:  `This will check when the users become 400 and after that this will bring us the throughput, cpu and memory.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("exec1 called")
 
@@ -59,54 +59,98 @@ var exec1Cmd = &cobra.Command{
 				}
 			}
 
-			if locustUsers >= 500 {
-				fmt.Println("locust users reached. data will be fetched now to calculate avg benchmark.")
+			if locustUsers >= 400 {
+				fmt.Println("locust users reached 400. data will be fetched now to calculate avg benchmark.")
 				break
 			}
 
-			fmt.Printf("\rWaiting for locust_users to reach 1000 ")
+			fmt.Printf("\rWaiting for locust_users to reach 400\n")
 		}
 
-		time.Sleep(2 * time.Minute)
+		time.Sleep(11 * time.Minute)
 
-		// query minute for the next 10 minutes
-		cpuQuery := `sum(rate(container_cpu_usage_seconds_total{pod=~"frontend-.*", container = "", namespace="default"}[1m]))`
-		cpuResults := make([]float64, 0, 10)
+		// query of cpu of each microservice pod
+		CPUQueries := map[string]string{
+			"Frontend":              `sum(rate(container_cpu_usage_seconds_total{pod=~"frontend-.*", container="", namespace="default"}[10m]))`,
+			"Adservice":             `sum(rate(container_cpu_usage_seconds_total{pod=~"adservice-.*", container="", namespace="default"}[10m]))`,
+			"Cartservice":           `sum(rate(container_cpu_usage_seconds_total{pod=~"cartservice-.*", container="", namespace="default"}[10m]))`,
+			"Checkoutservice":       `sum(rate(container_cpu_usage_seconds_total{pod=~"checkoutservice-.*", container="", namespace="default"}[10m]))`,
+			"Currencyservice":       `sum(rate(container_cpu_usage_seconds_total{pod=~"currencyservice-.*", container="", namespace="default"}[10m]))`,
+			"Emailservice":          `sum(rate(container_cpu_usage_seconds_total{pod=~"emailservice-.*", container="", namespace="default"}[10m]))`,
+			"Loadgenerator":         `sum(rate(container_cpu_usage_seconds_total{pod=~"loadgenerator-.*", container="", namespace="default"}[10m]))`,
+			"Paymentservice":        `sum(rate(container_cpu_usage_seconds_total{pod=~"paymentservice-.*", container="", namespace="default"}[10m]))`,
+			"Productcatalogservice": `sum(rate(container_cpu_usage_seconds_total{pod=~"productcatalogservice-.*", container="", namespace="default"}[10m]))`,
+			"Recommendationservice": `sum(rate(container_cpu_usage_seconds_total{pod=~"recommendationservice-.*", container="", namespace="default"}[10m]))`,
+			"Redis":                 `sum(rate(container_cpu_usage_seconds_total{pod=~"redis-.*", container="", namespace="default"}[10m]))`,
+			"Shippingservice":       `sum(rate(container_cpu_usage_seconds_total{pod=~"shippingservice-.*", container="", namespace="default"}[10m]))`,
+		}
+		MemoryQueries := map[string]string{
+			"Frontend":              `sum(container_memory_usage_bytes{pod=~"frontend-.*", namespace="default"})`,
+			"Adservice":             `sum(container_memory_usage_bytes{pod=~"adservice-.*", namespace="default"})`,
+			"Cartservice":           `sum(container_memory_usage_bytes{pod=~"cartservice-.*", namespace="default"})`,
+			"Checkoutservice":       `sum(container_memory_usage_bytes{pod=~"checkoutservice-.*", namespace="default"})`,
+			"Currencyservice":       `sum(container_memory_usage_bytes{pod=~"currencyservice-.*", namespace="default"})`,
+			"Emailservice":          `sum(container_memory_usage_bytes{pod=~"emailservice-.*", namespace="default"})`,
+			"Loadgenerator":         `sum(container_memory_usage_bytes{pod=~"loadgenerator-.*", namespace="default"})`,
+			"Paymentservice":        `sum(container_memory_usage_bytes{pod=~"paymentservice-.*", namespace="default"})`,
+			"Productcatalogservice": `sum(container_memory_usage_bytes{pod=~"productcatalogservice-.*", namespace="default"})`,
+			"Recommendationservice": `sum(container_memory_usage_bytes{pod=~"recommendationservice-.*", namespace="default"})`,
+			"Redis":                 `sum(container_memory_usage_bytes{pod=~"redis-.*", namespace="default"})`,
+			"Shippingservice":       `sum(container_memory_usage_bytes{pod=~"shippingservice-.*", namespace="default"})`,
+		}
 
-		cpuTicker := time.NewTicker(1 * time.Minute)
-		defer cpuTicker.Stop()
-
-		for i := 0; i < 10; i++ {
-			<-cpuTicker.C
-
-			cpuResult, err := QueryPrometheus(promClient, cpuQuery)
+		for serviceName, query := range CPUQueries {
+			result, err := QueryPrometheus(promClient, query)
 			if err != nil {
-				fmt.Println("Error querying Prometheus for CPU metrics:", err)
+				fmt.Printf("Error querying Prometheus for CPU metrics (%s): %v\n", serviceName, err)
 				return
 			}
-
-			if cpuResult.Type() == model.ValVector {
-				vector := cpuResult.(model.Vector)
-				for _, sample := range vector {
-					cpuResults = append(cpuResults, float64(sample.Value))
-				}
+			fmt.Printf("%s CPU usage: %v\n", serviceName, result)
+		}
+		for serviceName, query := range MemoryQueries {
+			result, err := QueryPrometheus(promClient, query)
+			if err != nil {
+				fmt.Printf("Error querying Prometheus for Memory metrics (%s): %v\n", serviceName, err)
+				return
 			}
+			fmt.Printf("%s Memory usage: %v\n", serviceName, result)
 		}
-		fmt.Println(cpuResults)
-		var sum float64
-		for _, value := range cpuResults {
-			sum += value
-		}
-		avgCPUUsage := sum / float64(len(cpuResults))
+		// cpuResults := make([]float64, 0, 10)
 
-		fmt.Printf("\nAverage CPU usage over the last 10 minutes: %f\n", avgCPUUsage)
+		// cpuTicker := time.NewTicker(1 * time.Minute)
+		// defer cpuTicker.Stop()
 
-		locustResult, err := QueryPrometheus(promClient, locustQuery)
+		// for i := 0; i < 10; i++ {
+		// 	<-cpuTicker.C
+
+		// 	cpuResult, err := QueryPrometheus(promClient, cpuQuery)
+		// 	if err != nil {
+		// 		fmt.Println("Error querying Prometheus for CPU metrics:", err)
+		// 		return
+		// 	}
+
+		// 	if cpuResult.Type() == model.ValVector {
+		// 		vector := cpuResult.(model.Vector)
+		// 		for _, sample := range vector {
+		// 			cpuResults = append(cpuResults, float64(sample.Value))
+		// 		}
+		// 	}
+		// }
+		// var sum float64
+		// for _, value := range cpuResults {
+		// 	sum += value
+		// }
+		// avgCPUUsage := sum / float64(len(cpuResults))
+
+		// fmt.Printf("\nAverage CPU usage over the last 10 minutes: %f\n", avgCPUUsage)
+
+		locustThroughput := `avg_over_time(locust_requests_current_rps{job="locust", name="Aggregated"}[10m])`
+		locustThroughputResult, err := QueryPrometheus(promClient, locustThroughput)
 		if err != nil {
 			fmt.Println("Error querying Prometheus for Locust metrics:", err)
 			return
 		}
-		fmt.Println("Locust Query result:", locustResult)
+		fmt.Println("Locust Throughput Average for last 10mins:", locustThroughputResult)
 	},
 }
 
