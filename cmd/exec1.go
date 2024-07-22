@@ -21,7 +21,7 @@ import (
 var exec1Cmd = &cobra.Command{
 	Use:   "exec1",
 	Short: "A brief description of your command",
-	Long:  `This will check when the users become 400 and after that this will bring us the throughput, cpu and memory.`,
+	Long:  `This will check when the users become 300 and after that this will bring us the throughput, cpu and memory.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("exec1 called")
 
@@ -59,44 +59,44 @@ var exec1Cmd = &cobra.Command{
 				}
 			}
 
-			if locustUsers >= 400 {
-				fmt.Println("locust users reached 400. data will be fetched now to calculate avg benchmark.")
+			if locustUsers >= 300 {
+				fmt.Println("locust users reached 300. data will be fetched now to calculate avg benchmark.")
 				break
 			}
 
-			fmt.Printf("\rWaiting for locust_users to reach 400\n")
+			fmt.Printf("\rWaiting for locust_users to reach 300\n")
 		}
 
 		time.Sleep(11 * time.Minute)
 
 		// query of cpu of each microservice pod
 		CPUQueries := map[string]string{
-			"Frontend":              `sum(rate(container_cpu_usage_seconds_total{pod=~"frontend-.*", container="", namespace="default"}[10m]))`,
-			"Adservice":             `sum(rate(container_cpu_usage_seconds_total{pod=~"adservice-.*", container="", namespace="default"}[10m]))`,
-			"Cartservice":           `sum(rate(container_cpu_usage_seconds_total{pod=~"cartservice-.*", container="", namespace="default"}[10m]))`,
-			"Checkoutservice":       `sum(rate(container_cpu_usage_seconds_total{pod=~"checkoutservice-.*", container="", namespace="default"}[10m]))`,
-			"Currencyservice":       `sum(rate(container_cpu_usage_seconds_total{pod=~"currencyservice-.*", container="", namespace="default"}[10m]))`,
-			"Emailservice":          `sum(rate(container_cpu_usage_seconds_total{pod=~"emailservice-.*", container="", namespace="default"}[10m]))`,
-			"Loadgenerator":         `sum(rate(container_cpu_usage_seconds_total{pod=~"loadgenerator-.*", container="", namespace="default"}[10m]))`,
-			"Paymentservice":        `sum(rate(container_cpu_usage_seconds_total{pod=~"paymentservice-.*", container="", namespace="default"}[10m]))`,
-			"Productcatalogservice": `sum(rate(container_cpu_usage_seconds_total{pod=~"productcatalogservice-.*", container="", namespace="default"}[10m]))`,
-			"Recommendationservice": `sum(rate(container_cpu_usage_seconds_total{pod=~"recommendationservice-.*", container="", namespace="default"}[10m]))`,
-			"Redis":                 `sum(rate(container_cpu_usage_seconds_total{pod=~"redis-.*", container="", namespace="default"}[10m]))`,
-			"Shippingservice":       `sum(rate(container_cpu_usage_seconds_total{pod=~"shippingservice-.*", container="", namespace="default"}[10m]))`,
+			"Frontend":              `sum(rate(container_cpu_usage_seconds_total{pod=~"frontend-.*", container="", namespace="default"}[10m])) * 1000`,
+			"Adservice":             `sum(rate(container_cpu_usage_seconds_total{pod=~"adservice-.*", container="", namespace="default"}[10m])) * 1000`,
+			"Cartservice":           `sum(rate(container_cpu_usage_seconds_total{pod=~"cartservice-.*", container="", namespace="default"}[10m])) * 1000`,
+			"Checkoutservice":       `sum(rate(container_cpu_usage_seconds_total{pod=~"checkoutservice-.*", container="", namespace="default"}[10m])) * 1000`,
+			"Currencyservice":       `sum(rate(container_cpu_usage_seconds_total{pod=~"currencyservice-.*", container="", namespace="default"}[10m])) * 1000`,
+			"Emailservice":          `sum(rate(container_cpu_usage_seconds_total{pod=~"emailservice-.*", container="", namespace="default"}[10m])) * 1000`,
+			"Loadgenerator":         `sum(rate(container_cpu_usage_seconds_total{pod=~"loadgenerator-.*", container="", namespace="default"}[10m])) * 1000`,
+			"Paymentservice":        `sum(rate(container_cpu_usage_seconds_total{pod=~"paymentservice-.*", container="", namespace="default"}[10m])) * 1000`,
+			"Productcatalogservice": `sum(rate(container_cpu_usage_seconds_total{pod=~"productcatalogservice-.*", container="", namespace="default"}[10m])) * 1000`,
+			"Recommendationservice": `sum(rate(container_cpu_usage_seconds_total{pod=~"recommendationservice-.*", container="", namespace="default"}[10m])) * 1000`,
+			"Redis":                 `sum(rate(container_cpu_usage_seconds_total{pod=~"redis-.*", container="", namespace="default"}[10m])) * 1000`,
+			"Shippingservice":       `sum(rate(container_cpu_usage_seconds_total{pod=~"shippingservice-.*", container="", namespace="default"}[10m])) * 1000`,
 		}
 		MemoryQueries := map[string]string{
-			"Frontend":              `sum(container_memory_usage_bytes{pod=~"frontend-.*", namespace="default"})`,
-			"Adservice":             `sum(container_memory_usage_bytes{pod=~"adservice-.*", namespace="default"})`,
-			"Cartservice":           `sum(container_memory_usage_bytes{pod=~"cartservice-.*", namespace="default"})`,
-			"Checkoutservice":       `sum(container_memory_usage_bytes{pod=~"checkoutservice-.*", namespace="default"})`,
-			"Currencyservice":       `sum(container_memory_usage_bytes{pod=~"currencyservice-.*", namespace="default"})`,
-			"Emailservice":          `sum(container_memory_usage_bytes{pod=~"emailservice-.*", namespace="default"})`,
-			"Loadgenerator":         `sum(container_memory_usage_bytes{pod=~"loadgenerator-.*", namespace="default"})`,
-			"Paymentservice":        `sum(container_memory_usage_bytes{pod=~"paymentservice-.*", namespace="default"})`,
-			"Productcatalogservice": `sum(container_memory_usage_bytes{pod=~"productcatalogservice-.*", namespace="default"})`,
-			"Recommendationservice": `sum(container_memory_usage_bytes{pod=~"recommendationservice-.*", namespace="default"})`,
-			"Redis":                 `sum(container_memory_usage_bytes{pod=~"redis-.*", namespace="default"})`,
-			"Shippingservice":       `sum(container_memory_usage_bytes{pod=~"shippingservice-.*", namespace="default"})`,
+			"Frontend":              `sum(container_memory_usage_bytes{pod=~"frontend-.*", namespace="default"}) / 1024 / 1024`,
+			"Adservice":             `sum(container_memory_usage_bytes{pod=~"adservice-.*", namespace="default"}) / 1024 / 1024`,
+			"Cartservice":           `sum(container_memory_usage_bytes{pod=~"cartservice-.*", namespace="default"}) / 1024 / 1024`,
+			"Checkoutservice":       `sum(container_memory_usage_bytes{pod=~"checkoutservice-.*", namespace="default"}) / 1024 / 1024`,
+			"Currencyservice":       `sum(container_memory_usage_bytes{pod=~"currencyservice-.*", namespace="default"}) / 1024 / 1024`,
+			"Emailservice":          `sum(container_memory_usage_bytes{pod=~"emailservice-.*", namespace="default"}) / 1024 / 1024`,
+			"Loadgenerator":         `sum(container_memory_usage_bytes{pod=~"loadgenerator-.*", namespace="default"}) / 1024 / 1024`,
+			"Paymentservice":        `sum(container_memory_usage_bytes{pod=~"paymentservice-.*", namespace="default"}) / 1024 / 1024`,
+			"Productcatalogservice": `sum(container_memory_usage_bytes{pod=~"productcatalogservice-.*", namespace="default"}) / 1024 / 1024`,
+			"Recommendationservice": `sum(container_memory_usage_bytes{pod=~"recommendationservice-.*", namespace="default"}) / 1024 / 1024`,
+			"Redis":                 `sum(container_memory_usage_bytes{pod=~"redis-.*", namespace="default"}) / 1024 / 1024`,
+			"Shippingservice":       `sum(container_memory_usage_bytes{pod=~"shippingservice-.*", namespace="default"}) / 1024 / 1024`,
 		}
 
 		for serviceName, query := range CPUQueries {
