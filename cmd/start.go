@@ -21,29 +21,18 @@ var startCmd = &cobra.Command{
 			fmt.Println("Kubernetes cluster is not running or accessible")
 		}
 		REPO_URL := "https://raw.githubusercontent.com/sratslla/KBC-KubeArmor-Benchmark-calculator/main"
-		YAML_FILE_PATH := "manifests/kubernetes-manifests.yaml"
-		YAML_FILE_PATH2 := "manifests/loadgenerator_ui.yaml"
-		YAML_FILE_PATH3 := "manifests/kube-static-metrics.yaml"
-		YAML_FILE_PATH4 := "manifests/prometheusComponent.yaml"
-		err := applyManifestFromGitHub(REPO_URL, YAML_FILE_PATH)
-		if err != nil {
-			fmt.Println("Error applying manifest:", err)
-			os.Exit(1)
+		manifestPaths := []string{
+			"manifests/kubernetes-manifests.yaml",
+			"manifests/loadgenerator_ui.yaml",
+			"manifests/kube-static-metrics.yaml",
+			"manifests/prometheusComponent.yaml",
 		}
-		err2 := applyManifestFromGitHub(REPO_URL, YAML_FILE_PATH2)
-		if err2 != nil {
-			fmt.Println("Error applying manifest:", err2)
-			os.Exit(1)
-		}
-		err3 := applyManifestFromGitHub(REPO_URL, YAML_FILE_PATH3)
-		if err3 != nil {
-			fmt.Println("Error applying manifest:", err3)
-			os.Exit(1)
-		}
-		err4 := applyManifestFromGitHub(REPO_URL, YAML_FILE_PATH4)
-		if err4 != nil {
-			fmt.Println("Error applying manifest:", err4)
-			os.Exit(1)
+		for _, manifestmanifestPath := range manifestPaths {
+			err := applyManifestFromGitHub(REPO_URL, manifestmanifestPath)
+			if err != nil {
+				fmt.Println("Error applying manifest:", err)
+				os.Exit(1)
+			}
 		}
 
 		autoscaleDeployment("cartservice", 50, 2, 400)

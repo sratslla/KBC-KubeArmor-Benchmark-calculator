@@ -65,6 +65,23 @@ var exec2Cmd = &cobra.Command{
 			}
 		}
 
+		err := installKubearmor()
+		if err != nil {
+			fmt.Printf("Error installing Kubearmor: %v\n", err)
+			return
+		}
+
+		err = runKarmorInstall()
+		if err != nil {
+			fmt.Printf("Error running karmor install: %v\n", err)
+			return
+		}
+
+		err = configureKubearmorRelay()
+		if err != nil {
+			fmt.Printf("Error configuring kubearmor relay: %v\n", err)
+			return
+		}
 	},
 }
 
@@ -108,5 +125,46 @@ func deleteHPA(deploymentName string) error {
 		return fmt.Errorf("error deleting HPA: %v\n%s", err, output.String())
 	}
 	fmt.Printf("HPA for %s deleted successfully.\n", deploymentName)
+	return nil
+}
+
+func installKubearmor() error {
+	cmd := exec.Command("sh", "-c", "curl -sfL http://get.kubearmor.io/ | sudo sh -s -- -b /usr/local/bin")
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	cmd.Stderr = &output
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error installing Kubearmor: %v\n%s", err, output.String())
+	}
+	fmt.Println("Kubearmor installed successfully.")
+	return nil
+}
+
+func runKarmorInstall() error {
+	cmd := exec.Command("karmor", "install")
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	cmd.Stderr = &output
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error running karmor install: %v\n%s", err, output.String())
+	}
+	fmt.Println("karmor installed successfully.")
+	return nil
+}
+
+func configureKubearmorRelay() error {
+	// Command to patch the kubearmor-relay deployment
+	patch := `{"spec": {"template": {"spec": {"tolerations": [{"key": "color", "operator": "Equal", "value": "blue", "effect": "NoSchedule"}], "nodeSelector": {"nodetype": "node1"}}}}}`
+	cmd := exec.Command("kubectl", "patch", "deploy", "kubearmor-relay", "-n", "kubearmor", "--patch", patch)
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	cmd.Stderr = &output
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error configuring kubearmor relay: %v\n%s", err, output.String())
+	}
+	fmt.Println("kubearmor-relay configured successfully.")
 	return nil
 }
