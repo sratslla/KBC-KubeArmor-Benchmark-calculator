@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -18,14 +19,19 @@ var exec3Cmd = &cobra.Command{
 	Long:  `Here we will test the benchmark on different visiblities i.e none, process, process+file, process+network, process+network+file`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("exec3 called")
+		time.Sleep(3 * time.Minute)
 		calculateBenchMark()
 		changeVisiblity("process")
+		time.Sleep(3 * time.Minute)
 		calculateBenchMark()
 		changeVisiblity("process, file")
+		time.Sleep(3 * time.Minute)
 		calculateBenchMark()
 		changeVisiblity("process, network")
+		time.Sleep(3 * time.Minute)
 		calculateBenchMark()
 		changeVisiblity("process, network, file")
+		time.Sleep(3 * time.Minute)
 		calculateBenchMark()
 	},
 }
