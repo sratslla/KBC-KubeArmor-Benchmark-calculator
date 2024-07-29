@@ -6,7 +6,9 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
+	"regexp"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -18,6 +20,10 @@ var exec3Cmd = &cobra.Command{
 	Short: "Here we will test the benchmark on different visiblities",
 	Long:  `Here we will test the benchmark on different visiblities i.e none, process, process+file, process+network, process+network+file`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		REPO_URL := "https://raw.githubusercontent.com/sratslla/KBC-KubeArmor-Benchmark-calculator/main"
+		manifestmanifestPath := "manifests/policy-file.yaml"
+
 		fmt.Println("exec3 called")
 		time.Sleep(3 * time.Minute)
 		calculateBenchMark()
@@ -32,6 +38,16 @@ var exec3Cmd = &cobra.Command{
 		calculateBenchMark()
 		changeVisiblity("process, network, file")
 		time.Sleep(3 * time.Minute)
+		calculateBenchMark()
+
+		// Calculating Benchmark on different Policies.
+		changeVisiblity("none")
+		fmt.Printf("no checking for different policy")
+		err := applyManifestFromGitHub(REPO_URL, manifestmanifestPath)
+		if err != nil {
+			fmt.Println("Error applying manifest:", err)
+			os.Exit(1)
+		}
 		calculateBenchMark()
 	},
 }
@@ -93,6 +109,7 @@ func calculateBenchMark() {
 		"Shippingservice":       `sum(container_memory_usage_bytes{pod=~"shippingservice-.*", namespace="default"}) / 1024 / 1024`,
 	}
 
+	fmt.Printf("CPU Usage \n")
 	for serviceName, query := range CPUQueries {
 		result, err := QueryPrometheus(promClient, query)
 		if err != nil {
@@ -101,6 +118,7 @@ func calculateBenchMark() {
 		}
 		fmt.Printf("%s CPU usage: %v\n", serviceName, result)
 	}
+	fmt.Printf("Memory \n")
 	for serviceName, query := range MemoryQueries {
 		result, err := QueryPrometheus(promClient, query)
 		if err != nil {
@@ -116,5 +134,12 @@ func calculateBenchMark() {
 		fmt.Println("Error querying Prometheus for Locust metrics:", err)
 		return
 	}
-	fmt.Println("Locust Throughput Average for last 10mins:", locustThroughputResult)
+	re := regexp.MustCompile(`=>\s+([0-9.]+)\s+@`)
+	match := re.FindStringSubmatch(locustThroughputResult.String())
+	if len(match) > 1 {
+		value := match[1]
+		fmt.Println("Locust Throughput Average for last 10mins:", value)
+	} else {
+		fmt.Println("Error: Could not parse the result")
+	}
 }
