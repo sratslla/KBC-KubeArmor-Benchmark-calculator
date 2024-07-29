@@ -5,7 +5,7 @@ metadata:
 spec:
   nodeSelector:
     matchLabels:
-      kubernetes.io/hostname: kubearmor-dev
+      nodetype: node1
   severity: 5
   process:
     matchPaths:
@@ -25,7 +25,7 @@ metadata:
 spec:
   nodeSelector:
     matchLabels:
-      kubernetes.io/hostname: gke-example-cluster-terraform-2024072-8965d998-x7mn
+      nodetype: node1
   severity: 5
   process:
     matchPaths:
@@ -45,7 +45,7 @@ metadata:
 spec:
   nodeSelector:
     matchLabels:
-      kubernetes.io/hostname: kubearmor-dev
+      nodetype: node1
   severity: 5
   process:
     matchPaths:

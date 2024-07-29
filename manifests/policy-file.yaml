@@ -5,7 +5,7 @@ metadata:
 spec:
   nodeSelector:
     matchLabels:
-      kubernetes.io/hostname: kubearmor-dev
+      nodetype: node1
   severity: 5
   file:
     matchDirectories:
@@ -23,7 +23,7 @@ metadata:
 spec:
   nodeSelector:
     matchLabels:
-      kubernetes.io/hostname: kubearmor-dev
+      nodetype: node1
   severity: 5
   file:
     matchDirectories:
@@ -40,7 +40,7 @@ metadata:
 spec:
   nodeSelector:
     matchLabels:
-      kubernetes.io/hostname: kubearmor-dev
+      nodetype: node1
   severity: 5
   file:
     matchPaths:

@@ -6,7 +6,6 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"os/exec"
 	"regexp"
 	"time"
@@ -21,8 +20,8 @@ var exec3Cmd = &cobra.Command{
 	Long:  `Here we will test the benchmark on different visiblities i.e none, process, process+file, process+network, process+network+file`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		REPO_URL := "https://raw.githubusercontent.com/sratslla/KBC-KubeArmor-Benchmark-calculator/main"
-		manifestmanifestPath := "manifests/policy-file.yaml"
+		// REPO_URL := "https://raw.githubusercontent.com/sratslla/KBC-KubeArmor-Benchmark-calculator/main"
+		// manifestmanifestPath := "manifests/policy-file.yaml"
 
 		fmt.Println("exec3 called")
 		time.Sleep(3 * time.Minute)
@@ -41,14 +40,14 @@ var exec3Cmd = &cobra.Command{
 		calculateBenchMark()
 
 		// Calculating Benchmark on different Policies.
-		changeVisiblity("none")
-		fmt.Printf("no checking for different policy")
-		err := applyManifestFromGitHub(REPO_URL, manifestmanifestPath)
-		if err != nil {
-			fmt.Println("Error applying manifest:", err)
-			os.Exit(1)
-		}
-		calculateBenchMark()
+		// changeVisiblity("none")
+		// fmt.Printf("no checking for different policy")
+		// err := applyManifestFromGitHub(REPO_URL, manifestmanifestPath)
+		// if err != nil {
+		// 	fmt.Println("Error applying manifest:", err)
+		// 	os.Exit(1)
+		// }
+		// calculateBenchMark()
 	},
 }
 
