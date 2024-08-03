@@ -1,51 +1,14 @@
 apiVersion: security.kubearmor.com/v1
-kind: KubeArmorHostPolicy
+kind: KubeArmorPolicy
 metadata:
-  name: hsp-kubearmor-dev-file-dir-allow-fromsource
+  name: block-service-access-token-access
 spec:
-  nodeSelector:
+  selector:
     matchLabels:
-      nodetype: node1
-  severity: 5
+      app: nginx
   file:
     matchDirectories:
-    - dir: /etc/default/
+    - dir: /run/secrets/kubernetes.io/serviceaccount/
       recursive: true
-      fromSource:
-      - path: /usr/bin/head
-  action:
-    Allow
----
-apiVersion: security.kubearmor.com/v1
-kind: KubeArmorHostPolicy
-metadata:
-  name: hsp-kubearmor-dev-file-dir-block-fromsource
-spec:
-  nodeSelector:
-    matchLabels:
-      nodetype: node1
-  severity: 5
-  file:
-    matchDirectories:
-    - dir: /etc/default/
-      fromSource:
-      - path: /usr/bin/head
   action:
     Block
----
-apiVersion: security.kubearmor.com/v1
-kind: KubeArmorHostPolicy
-metadata:
-  name: hsp-kubearmor-dev-file-path-allow-fromsource
-spec:
-  nodeSelector:
-    matchLabels:
-      nodetype: node1
-  severity: 5
-  file:
-    matchPaths:
-    - path: /etc/hostname
-      fromSource:
-      - path: /usr/bin/head
-  action:
-    Allow

@@ -38,6 +38,7 @@ var exec3Cmd = &cobra.Command{
 		changeVisiblity("process, network, file")
 		time.Sleep(3 * time.Minute)
 		calculateBenchMark()
+		changeVisiblity("none")
 
 		// Calculating Benchmark on different Policies.
 		// changeVisiblity("none")
