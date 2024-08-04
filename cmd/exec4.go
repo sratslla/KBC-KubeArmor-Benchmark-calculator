@@ -18,7 +18,6 @@ var exec4Cmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("exec4 called")
 		time.Sleep(3 * time.Minute)
-		calculateBenchMark()
 	},
 }
 

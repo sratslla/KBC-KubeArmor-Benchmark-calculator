@@ -4,15 +4,9 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
 	"fmt"
-	"os/exec"
 	"time"
 
-	"github.com/prometheus/client_golang/api"
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/spf13/cobra"
 )
@@ -158,60 +152,60 @@ func init() {
 	rootCmd.AddCommand(exec1Cmd)
 }
 
-func NewPrometheusClient(prometheusURL string) (v1.API, error) {
-	client, err := api.NewClient(api.Config{
-		Address: prometheusURL,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return v1.NewAPI(client), nil
-}
+// func NewPrometheusClient(prometheusURL string) (v1.API, error) {
+// 	client, err := api.NewClient(api.Config{
+// 		Address: prometheusURL,
+// 	})
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return v1.NewAPI(client), nil
+// }
 
-func QueryPrometheus(api v1.API, query string) (model.Value, error) {
-	result, warnings, err := api.Query(context.Background(), query, time.Now())
-	if err != nil {
-		return nil, err
-	}
-	if len(warnings) > 0 {
-		fmt.Println("Warnings received during query execution:", warnings)
-	}
-	return result, nil
-}
+// func QueryPrometheus(api v1.API, query string) (model.Value, error) {
+// 	result, warnings, err := api.Query(context.Background(), query, time.Now())
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if len(warnings) > 0 {
+// 		fmt.Println("Warnings received during query execution:", warnings)
+// 	}
+// 	return result, nil
+// }
 
-func getExternalIP() (string, error) {
-	cmd := exec.Command("kubectl", "get", "nodes", "-o", "json")
+// func getExternalIP() (string, error) {
+// 	cmd := exec.Command("kubectl", "get", "nodes", "-o", "json")
 
-	var output bytes.Buffer
-	cmd.Stdout = &output
-	err := cmd.Run()
-	if err != nil {
-		return "", fmt.Errorf("error getting nodes: %v", err)
-	}
+// 	var output bytes.Buffer
+// 	cmd.Stdout = &output
+// 	err := cmd.Run()
+// 	if err != nil {
+// 		return "", fmt.Errorf("error getting nodes: %v", err)
+// 	}
 
-	var nodes struct {
-		Items []struct {
-			Status struct {
-				Addresses []struct {
-					Type    string `json:"type"`
-					Address string `json:"address"`
-				} `json:"addresses"`
-			} `json:"status"`
-		} `json:"items"`
-	}
+// 	var nodes struct {
+// 		Items []struct {
+// 			Status struct {
+// 				Addresses []struct {
+// 					Type    string `json:"type"`
+// 					Address string `json:"address"`
+// 				} `json:"addresses"`
+// 			} `json:"status"`
+// 		} `json:"items"`
+// 	}
 
-	err = json.Unmarshal(output.Bytes(), &nodes)
-	if err != nil {
-		return "", fmt.Errorf("error unmarshalling nodes JSON: %v", err)
-	}
+// 	err = json.Unmarshal(output.Bytes(), &nodes)
+// 	if err != nil {
+// 		return "", fmt.Errorf("error unmarshalling nodes JSON: %v", err)
+// 	}
 
-	for _, node := range nodes.Items {
-		for _, address := range node.Status.Addresses {
-			if address.Type == "ExternalIP" {
-				return address.Address, nil
-			}
-		}
-	}
+// 	for _, node := range nodes.Items {
+// 		for _, address := range node.Status.Addresses {
+// 			if address.Type == "ExternalIP" {
+// 				return address.Address, nil
+// 			}
+// 		}
+// 	}
 
-	return "", fmt.Errorf("no external IP found")
-}
+// 	return "", fmt.Errorf("no external IP found")
+// }
