@@ -31,7 +31,6 @@ var startCmd = &cobra.Command{
 		REPO_URL := "https://raw.githubusercontent.com/sratslla/KBC-KubeArmor-Benchmark-calculator/main/manifests"
 		manifestPaths := []string{
 			"kubernetes-manifests.yaml",
-			"loadgenerator_ui.yaml",
 			"kube-static-metrics.yaml",
 			"prometheusComponent.yaml",
 		}
