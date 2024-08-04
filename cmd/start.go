@@ -24,7 +24,7 @@ var startCmd = &cobra.Command{
 		fmt.Println("start called")
 		// Check if cluster is running then apply manifest files and start autoscalling
 		if isKubernetesClusterRunning() {
-			fmt.Println("Kubernetes cluster is running")
+			fmt.Println("Kubernetes cluster is running ")
 		} else {
 			fmt.Println("Kubernetes cluster is not running or accessible")
 		}
