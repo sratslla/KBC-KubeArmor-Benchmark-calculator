@@ -18,7 +18,7 @@ import (
 
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "Start the benchmark process and apply all the relevant resources.",
+	Short: "Start the benchmark process and apply all the relevant  resources.",
 	Long:  `Start the benchmark process and apply all the relevant resources.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("start called")
