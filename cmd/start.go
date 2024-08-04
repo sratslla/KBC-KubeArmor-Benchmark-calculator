@@ -18,7 +18,7 @@ import (
 
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "Start the benchmark process and apply all the relevant resources.",
+	Short: "Start the benchmark process and apply all the relevant  resources.",
 	Long:  `Start the benchmark process and apply all the relevant resources.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("start called")
@@ -31,6 +31,7 @@ var startCmd = &cobra.Command{
 		REPO_URL := "https://raw.githubusercontent.com/sratslla/KBC-KubeArmor-Benchmark-calculator/main/manifests"
 		manifestPaths := []string{
 			"kubernetes-manifests.yaml",
+			"loadgenerator_ui.yaml",
 			"kube-static-metrics.yaml",
 			"prometheusComponent.yaml",
 		}

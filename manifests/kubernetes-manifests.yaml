@@ -144,6 +144,8 @@ spec:
           value: "frontend:80"
         - name: USERS
           value: "300"
+        ports:
+        - containerPort: 8089 # Locust UI port
       - name: locust-exporter
         image: containersol/locust_exporter
         ports:
@@ -166,6 +168,9 @@ spec:
   selector:
     app: loadgenerator
   ports:
+  - name: locust-ui
+    port: 8089
+    targetPort: 8089
   - name: locust-exporter
     port: 9646
     targetPort: 9646
