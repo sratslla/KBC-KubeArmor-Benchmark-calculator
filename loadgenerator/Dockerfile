@@ -32,5 +32,4 @@ COPY locustfile.py .
 # enable gevent support in debugger
 ENV GEVENT_SUPPORT=True
 
-ENTRYPOINT ["locust", "--host=http://${FRONTEND_ADDR}", "--headless", "-u", "${USERS:-10}", "-r", "1", "-t", "1h", "-f", "locustfile.py"]
-
+ENTRYPOINT locust --host="http://${FRONTEND_ADDR}" --headless -u "${USERS:-300}" -r 1 2>&1
