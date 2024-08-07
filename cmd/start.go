@@ -149,7 +149,7 @@ var startCmd = &cobra.Command{
 		calculateBenchMark(promClient, WithoutKubeArmor, "none")
 		calculateBenchMark(promClient, WithKubeArmorWithPolicy, "trailonly")
 
-		templateContent, err := ioutil.ReadFile("../report_template.md")
+		templateContent, err := ioutil.ReadFile("report_template.md")
 		if err != nil {
 			fmt.Println("Error reading template file:", err)
 			return
