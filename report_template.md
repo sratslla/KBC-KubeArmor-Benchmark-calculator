@@ -8,9 +8,9 @@ You can setup the benchmarking environment by following [this](https://github.co
 
 {{- range .Reports }}
 
-## Report for {{.Case}}
+## Report for {{.Case}} - {{.MetricName}}
 
-Users | Kubearmor CPU | Kubearmor Relay CPU (m) | Kubearmor Memory | Kubearmor Relay Memory | Throughput (req/s) | Percentage Drop | {{- range .ResourceUsages }}CPU ({{ .Name }}), Memory ({{ .Name }}) | {{- end }} |
+Users | Kubearmor CPU | Kubearmor Relay CPU (m) | Kubearmor Memory | Kubearmor Relay Memory | Throughput (req/s) | Percentage Drop | {{- range .ResourceUsages }} ({{ .Name }})  | {{- end }} |
 --  |  --  |  --  |  --  |  --  |  --  |  --  |{{- range .ResourceUsages }}--  |  --{{- end }}|
  {{.Users}} | - | - | - | - | {{.Throughput}} | {{ .PercentageDrop }} | {{- range .ResourceUsages }}CPU={{ .CPU }}, Memory={{ .Memory }} | {{- end }} |
 

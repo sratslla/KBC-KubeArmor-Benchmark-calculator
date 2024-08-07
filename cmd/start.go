@@ -23,7 +23,7 @@ type CaseEnum string
 
 const (
 	WithoutKubeArmor        CaseEnum = "WithoutKubeArmor"
-	WithKubeArmorWithPolicy CaseEnum = "WithKubeArmorWithPolicy"
+	WithKubeArmorPolicy     CaseEnum = "WithKubeArmorPolicy"
 	WithKubeArmorVisibility CaseEnum = "WithKubeArmorVisibility"
 )
 
@@ -35,7 +35,7 @@ type ResourceUsage struct {
 
 // WK WOKP WOKV
 type SingleCaseReport struct {
-	Case           CaseEnum // Case type: WithoutKubeArmor, WithKubeArmor, WithKubeArmorWithPolicy, WithKubeArmorVisibility
+	Case           CaseEnum // Case type: WithoutKubeArmor, WithKubeArmor, WithKubeArmorPolicy, WithKubeArmorVisibility
 	MetricName     string   // Metric type: policy type, visibility type, none
 	Users          int32
 	Throughput     float32
@@ -144,41 +144,11 @@ var startCmd = &cobra.Command{
 		}
 
 		// waiting 1 min for resources to stabalization and 10 mins for calculating avg
-		time.Sleep(2 * time.Minute)
+		time.Sleep(1 * time.Minute)
 
-		calculateBenchMark(promClient, WithoutKubeArmor, "none")
-		calculateBenchMark(promClient, WithKubeArmorWithPolicy, "trailonly")
+		calculateBenchMark(promClient, WithoutKubeArmor, "")
 
-		templateContent, err := ioutil.ReadFile("report_template.md")
-		if err != nil {
-			fmt.Println("Error reading template file:", err)
-			return
-		}
-
-		// Create a new template and parse the Markdown template content
-		tmpl, err := template.New("markdown").Parse(string(templateContent))
-		if err != nil {
-			fmt.Println("Error parsing template:", err)
-			return
-		}
-
-		// Create a file to write the Markdown content
-		file, err := os.Create("final_report.md")
-		if err != nil {
-			fmt.Println("Error creating file:", err)
-			return
-		}
-		defer file.Close()
-
-		// Execute the template and write the content to the file
-		err = tmpl.Execute(file, finalReport)
-		if err != nil {
-			fmt.Println("Error executing template:", err)
-			return
-		}
-
-		fmt.Println("Markdown file created successfully!")
-
+		// TODO check may be one missing
 		deployments := []string{
 			"cartservice",
 			"currencyservice",
@@ -241,29 +211,29 @@ var startCmd = &cobra.Command{
 			fmt.Printf("Error configuring kubearmor relay: %v\n", err)
 			return
 		}
-		// time.Sleep(5 * time.Minute)
-		// calculateBenchMark(promClient, "WK_NO")
+		// time.Sleep(1 * time.Minute)
+		// calculateBenchMark(promClient, WithKubeArmorVisibility, "none")
 
-		// fmt.Println("exec3 called")
-		// time.Sleep(5 * time.Minute)
-		// calculateBenchMark(promClient, "V_NO")
+		fmt.Println("exec3 called")
+		time.Sleep(1 * time.Minute)
+		calculateBenchMark(promClient, WithKubeArmorVisibility, "none")
 
-		// changeVisiblity("process")
-		// time.Sleep(5 * time.Minute)
-		// calculateBenchMark(promClient, "V_P")
+		changeVisiblity("process")
+		time.Sleep(1 * time.Minute)
+		calculateBenchMark(promClient, WithKubeArmorVisibility, "process")
 
-		// changeVisiblity("process, file")
-		// time.Sleep(5 * time.Minute)
-		// calculateBenchMark(promClient, "V_PF")
+		changeVisiblity("process, file")
+		time.Sleep(1 * time.Minute)
+		calculateBenchMark(promClient, WithKubeArmorVisibility, "process & file")
 
-		// changeVisiblity("process, network")
-		// time.Sleep(5 * time.Minute)
-		// calculateBenchMark(promClient, "V_PN")
+		changeVisiblity("process, network")
+		time.Sleep(1 * time.Minute)
+		calculateBenchMark(promClient, WithKubeArmorVisibility, "process & network")
 
-		// changeVisiblity("process, network, file")
-		// time.Sleep(5 * time.Minute)
-		// calculateBenchMark(promClient, "V_PNF")
-		// changeVisiblity("none")
+		changeVisiblity("process, network, file")
+		time.Sleep(1 * time.Minute)
+		calculateBenchMark(promClient, WithKubeArmorVisibility, "process, network & file")
+		changeVisiblity("none")
 
 		// Apply Policies and check
 		// Process Policy
@@ -271,46 +241,47 @@ var startCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println("Error applying manifest:", err)
 		}
-		time.Sleep(5 * time.Minute)
-		// calculateBenchMark(promClient, "WK_P")
+		time.Sleep(1 * time.Minute)
+		calculateBenchMark(promClient, WithKubeArmorPolicy, "process")
 
 		// Process and Network Policy
 		err = applyManifestFromGitHub(REPO_URL, "policy-file.yaml")
 		if err != nil {
 			fmt.Println("Error applying manifest:", err)
 		}
-		time.Sleep(5 * time.Minute)
-		// calculateBenchMark(promClient, "WK_PNF")
+		time.Sleep(1 * time.Minute)
+		calculateBenchMark(promClient, WithKubeArmorPolicy, "process & file")
 
-		// Process, Network and File Policy
-		// err = applyManifestFromGitHub(REPO_URL, "policy-process.yaml")
-		// if err != nil {
-		// 	fmt.Println("Error applying manifest:", err)
-		// }
-		// calculateBenchMark(promClient)
+		templateContent, err := ioutil.ReadFile("report_template.md")
+		if err != nil {
+			fmt.Println("Error reading template file:", err)
+			return
+		}
 
-		// READ AND UPDATE MD FILE
-		// templateFile := "result.md"
-		// content, err := ioutil.ReadFile(templateFile)
-		// if err != nil {
-		// 	fmt.Printf("Error reading template file: %v\n", err)
-		// 	return
-		// }
+		// Create a new template and parse the Markdown template content
+		tmpl, err := template.New("markdown").Parse(string(templateContent))
+		if err != nil {
+			fmt.Println("Error parsing template:", err)
+			return
+		}
 
-		// updatedContent := string(content)
-		// for key, value := range placeholders {
-		// 	placeholder := fmt.Sprintf("{{%s}}", key)
-		// 	updatedContent = strings.ReplaceAll(updatedContent, placeholder, value)
-		// }
+		// Create a file to write the Markdown content
+		file, err := os.Create("final_report.md")
+		if err != nil {
+			fmt.Println("Error creating file:", err)
+			return
+		}
+		defer file.Close()
 
-		// outputFile := "result.md"
-		// err = ioutil.WriteFile(outputFile, []byte(updatedContent), 0644)
-		// if err != nil {
-		// 	fmt.Printf("Error writing output file: %v\n", err)
-		// 	return
-		// }
+		// Execute the template and write the content to the file
+		err = tmpl.Execute(file, finalReport)
+		if err != nil {
+			fmt.Println("Error executing template:", err)
+			return
+		}
 
-		fmt.Println("Markdown file updated successfully!")
+		fmt.Println("Markdown file created successfully!")
+
 	},
 }
 
