@@ -4,22 +4,8 @@ metadata:
   name: block-pkg-mgmt-tools-exec
 spec:
   selector:
-    matchExpressions:
-    - key: app
-      operator: In
-      values:
-      - frontend
-      - currencyservice
-      - loadgenerator
-      - productcatalogservice
-      - checkoutservice
-      - shippingservice
-      - cartservice
-      - redis-car
-      - emailservice
-      - paymentservice
-      - recommendationservice
-      - adservice
+    matchLabels:
+      env: benchmark
   process:
     matchPaths:
     - path: /usr/bin/apt

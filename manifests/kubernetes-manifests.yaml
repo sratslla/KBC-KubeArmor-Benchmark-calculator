@@ -4,6 +4,7 @@ metadata:
   name: currencyservice
   labels:
     app: currencyservice
+    env: benchmark
 spec:
   selector:
     matchLabels:
@@ -12,6 +13,7 @@ spec:
     metadata:
       labels:
         app: currencyservice
+        env: benchmark
     spec:
       serviceAccountName: currencyservice
       terminationGracePeriodSeconds: 5
@@ -78,6 +80,7 @@ metadata:
   name: loadgenerator
   labels:
     app: loadgenerator
+    env: benchmark
 spec:
   selector:
     matchLabels:
@@ -87,6 +90,7 @@ spec:
     metadata:
       labels:
         app: loadgenerator
+        env: benchmark
       annotations:
         sidecar.istio.io/rewriteAppHTTPProbers: "true"
     spec:
@@ -186,6 +190,7 @@ metadata:
   name: productcatalogservice
   labels:
     app: productcatalogservice
+    env: benchmark
 spec:
   selector:
     matchLabels:
@@ -194,6 +199,7 @@ spec:
     metadata:
       labels:
         app: productcatalogservice
+        env: benchmark
     spec:
       serviceAccountName: productcatalogservice
       terminationGracePeriodSeconds: 5
@@ -259,6 +265,7 @@ metadata:
   name: checkoutservice
   labels:
     app: checkoutservice
+    env: benchmark
 spec:
   selector:
     matchLabels:
@@ -267,6 +274,7 @@ spec:
     metadata:
       labels:
         app: checkoutservice
+        env: benchmark
     spec:
       serviceAccountName: checkoutservice
       securityContext:
@@ -341,6 +349,7 @@ metadata:
   name: shippingservice
   labels:
     app: shippingservice
+    env: benchmark
 spec:
   selector:
     matchLabels:
@@ -349,6 +358,7 @@ spec:
     metadata:
       labels:
         app: shippingservice
+        env: benchmark
     spec:
       serviceAccountName: shippingservice
       securityContext:
@@ -414,6 +424,7 @@ metadata:
   name: cartservice
   labels:
     app: cartservice
+    env: benchmark
 spec:
   selector:
     matchLabels:
@@ -422,6 +433,7 @@ spec:
     metadata:
       labels:
         app: cartservice
+        env: benchmark
     spec:
       serviceAccountName: cartservice
       terminationGracePeriodSeconds: 5
@@ -488,6 +500,7 @@ metadata:
   name: redis-cart
   labels:
     app: redis-cart
+    env: benchmark
 spec:
   selector:
     matchLabels:
@@ -496,6 +509,7 @@ spec:
     metadata:
       labels:
         app: redis-cart
+        env: benchmark
     spec:
       securityContext:
         fsGroup: 1000
@@ -557,6 +571,7 @@ metadata:
   name: emailservice
   labels:
     app: emailservice
+    env: benchmark
 spec:
   selector:
     matchLabels:
@@ -565,6 +580,7 @@ spec:
     metadata:
       labels:
         app: emailservice
+        env: benchmark
     spec:
       serviceAccountName: emailservice
       terminationGracePeriodSeconds: 5
@@ -632,6 +648,7 @@ metadata:
   name: paymentservice
   labels:
     app: paymentservice
+    env: benchmark
 spec:
   selector:
     matchLabels:
@@ -640,6 +657,7 @@ spec:
     metadata:
       labels:
         app: paymentservice
+        env: benchmark
     spec:
       serviceAccountName: paymentservice
       terminationGracePeriodSeconds: 5
@@ -705,6 +723,7 @@ metadata:
   name: frontend
   labels:
     app: frontend
+    env: benchmark
 spec:
   selector:
     matchLabels:
@@ -713,6 +732,7 @@ spec:
     metadata:
       labels:
         app: frontend
+        env: benchmark
       annotations:
         sidecar.istio.io/rewriteAppHTTPProbers: "true"
     spec:
@@ -833,6 +853,7 @@ metadata:
   name: recommendationservice
   labels:
     app: recommendationservice
+    env: benchmark
 spec:
   selector:
     matchLabels:
@@ -841,6 +862,7 @@ spec:
     metadata:
       labels:
         app: recommendationservice
+        env: benchmark
     spec:
       serviceAccountName: recommendationservice
       terminationGracePeriodSeconds: 5
@@ -910,6 +932,7 @@ metadata:
   name: adservice
   labels:
     app: adservice
+    env: benchmark
 spec:
   selector:
     matchLabels:
@@ -918,6 +941,7 @@ spec:
     metadata:
       labels:
         app: adservice
+        env: benchmark
     spec:
       serviceAccountName: adservice
       terminationGracePeriodSeconds: 5

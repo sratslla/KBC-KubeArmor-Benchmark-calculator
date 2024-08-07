@@ -4,22 +4,8 @@ metadata:
   name: block-service-access-token-access
 spec:
   selector:
-    matchExpressions:
-    - key: app
-      operator: In
-      values:
-      - frontend
-      - currencyservice
-      - loadgenerator
-      - productcatalogservice
-      - checkoutservice
-      - shippingservice
-      - cartservice
-      - redis-car
-      - emailservice
-      - paymentservice
-      - recommendationservice
-      - adservice
+    matchLabels:
+      env: benchmark
   file:
     matchDirectories:
     - dir: /run/secrets/kubernetes.io/serviceaccount/
