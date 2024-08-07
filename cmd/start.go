@@ -35,12 +35,13 @@ type ResourceUsage struct {
 
 // WK WOKP WOKV
 type SingleCaseReport struct {
-	Case           CaseEnum // Case type: WithoutKubeArmor, WithKubeArmor, WithKubeArmorPolicy, WithKubeArmorVisibility
-	MetricName     string   // Metric type: policy type, visibility type, none
-	Users          int32
-	Throughput     float32
-	PercentageDrop float32
-	ResourceUsages []ResourceUsage // List of resource usages
+	Case                    CaseEnum // Case type: WithoutKubeArmor, WithKubeArmor, WithKubeArmorPolicy, WithKubeArmorVisibility
+	MetricName              string   // Metric type: policy type, visibility type, none
+	Users                   int32
+	KubearmorResourceUsages []ResourceUsage
+	Throughput              float32
+	PercentageDrop          float32
+	ResourceUsages          []ResourceUsage // List of resource usages
 }
 
 type FinalReport struct {
@@ -210,8 +211,6 @@ var startCmd = &cobra.Command{
 			fmt.Printf("Error configuring kubearmor relay: %v\n", err)
 			return
 		}
-		// time.Sleep(1 * time.Minute)
-		// calculateBenchMark(promClient, WithKubeArmorVisibility, "none")
 
 		fmt.Println("exec3 called")
 		time.Sleep(1 * time.Minute)
@@ -235,7 +234,8 @@ var startCmd = &cobra.Command{
 		changeVisiblity("none")
 
 		// Apply Policies and check
-		// Process Policy
+
+		// Process Policy.
 		err = applyManifestFromGitHub(REPO_URL, "policy-process.yaml")
 		if err != nil {
 			fmt.Println("Error applying manifest:", err)
@@ -243,7 +243,7 @@ var startCmd = &cobra.Command{
 		time.Sleep(1 * time.Minute)
 		calculateBenchMark(promClient, WithKubeArmorPolicy, "process")
 
-		// Process and Network Policy
+		// Process and File Policy.
 		err = applyManifestFromGitHub(REPO_URL, "policy-file.yaml")
 		if err != nil {
 			fmt.Println("Error applying manifest:", err)
@@ -251,6 +251,15 @@ var startCmd = &cobra.Command{
 		time.Sleep(1 * time.Minute)
 		calculateBenchMark(promClient, WithKubeArmorPolicy, "process & file")
 
+		// Process, File and Network.
+		err = applyManifestFromGitHub(REPO_URL, "policy-network.yaml")
+		if err != nil {
+			fmt.Println("Error applying manifest:", err)
+		}
+		time.Sleep(1 * time.Minute)
+		calculateBenchMark(promClient, WithKubeArmorPolicy, "process, file and network")
+
+		// Write the data to markdown file.
 		templateContent, err := ioutil.ReadFile("report_template.md")
 		if err != nil {
 			fmt.Println("Error reading template file:", err)
@@ -473,22 +482,60 @@ func calculateBenchMark(promClient v1.API, scenario CaseEnum, Metric string) {
 
 	locustThroughputQuery := `avg_over_time(locust_requests_current_rps{job="locust", name="Aggregated"}[5m])`
 	locustThroughput, err := QueryPrometheus(promClient, locustThroughputQuery)
-	locustThroughputResult, _ := parseUsage(locustThroughput)
 	if err != nil {
 		fmt.Println("Error querying Prometheus for Locust metrics:", err)
 		return
+	}
+	locustThroughputResult, _ := parseUsage(locustThroughput)
+
+	kubearmorQueries := map[string]map[string]string{
+		"KUBEARMOR": {
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"kubearmor-bpf-containerd-.*", container="", namespace="kubeamor"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"kubearmor-bpf-containerd-.*", namespace="kubeamor"}) / 1024 / 1024`,
+		},
+		"KUBEARMOR-RELAY": {
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"kubearmor-relay-.*", container="", namespace="kubeamor"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"kubearmor-relay-.*", namespace="kubeamor"}) / 1024 / 1024`,
+		},
+	}
+
+	var KubearmorResourceUsages []ResourceUsage
+	for serviceName, queryMap := range kubearmorQueries {
+		cpuQuery := queryMap["cpu"]
+		memoryQuery := queryMap["memory"]
+
+		cpuTempResult, err := QueryPrometheus(promClient, cpuQuery)
+		if err != nil {
+			fmt.Printf("Error querying Prometheus for CPU metrics (%s): %v\n", serviceName, err)
+			continue
+		}
+		memoryTempResult, err := QueryPrometheus(promClient, memoryQuery)
+		if err != nil {
+			fmt.Printf("Error querying Prometheus for Memory metrics (%s): %v\n", serviceName, err)
+			continue
+		}
+		cpuResult, _ := parseUsage(cpuTempResult)
+		memoryResult, _ := parseUsage(memoryTempResult)
+
+		resourceUsage := ResourceUsage{
+			Name:   serviceName,
+			CPU:    cpuResult,
+			Memory: memoryResult,
+		}
+		KubearmorResourceUsages = append(KubearmorResourceUsages, resourceUsage)
 	}
 
 	if scenario == "WithoutKubeArmor" {
 		defaultThroughput = locustThroughputResult
 	}
 	partialReport := SingleCaseReport{
-		Case:           scenario,
-		MetricName:     Metric,
-		Users:          defaultUsers,
-		Throughput:     locustThroughputResult,
-		PercentageDrop: ((defaultThroughput - locustThroughputResult) / defaultThroughput) * 100,
-		ResourceUsages: resourceUsages,
+		Case:                    scenario,
+		MetricName:              Metric,
+		Users:                   defaultUsers,
+		KubearmorResourceUsages: KubearmorResourceUsages,
+		Throughput:              locustThroughputResult,
+		PercentageDrop:          ((defaultThroughput - locustThroughputResult) / defaultThroughput) * 100,
+		ResourceUsages:          resourceUsages,
 	}
 	finalReport.Reports = append(finalReport.Reports, partialReport)
 	printFinalReport(finalReport)

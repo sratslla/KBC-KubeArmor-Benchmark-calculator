@@ -46,12 +46,9 @@ jobs:
         go build -o KBC main.go
         ./KBC start
         output=$(cat final_report.md)
+        cat final_report.md > kbc_output.md
         echo "KBC tool output:"
-        echo "$output"
-        echo "$output" > kbc_output.txt
-        echo "KBC_OUTPUT<<EOF" >> $GITHUB_ENV
-        echo "$output" >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
+        cat kbc_output.md
 
     - name: Checkout Wiki Repository
       uses: actions/checkout@v3
@@ -67,8 +64,7 @@ jobs:
 
     - name: Update Wiki with CLI Output
       run: |
-        echo "## CLI Tool Output" > ./wiki/CLI-Tool-Output.md
-        echo "$CLI_OUTPUT" >> ./wiki/CLI-Tool-Output.md
+        cp kbc_output.md ./wiki/CLI-Tool-Output.md
 
     - name: Commit and Push Changes
       env:
