@@ -45,7 +45,7 @@ jobs:
         cd KBC-KubeArmor-Benchmark-calculator
         go build -o KBC main.go
         output=$(cat report_template.md)
-        cat final_report.md > kbc_output.md
+        cat report_template.md > kbc_output.md
         echo "KBC tool output:"
         cat kbc_output.md
 

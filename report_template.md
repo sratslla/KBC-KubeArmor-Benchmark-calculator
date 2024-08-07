@@ -10,7 +10,7 @@ You can setup the benchmarking environment by following [this](https://github.co
 
 ## Report for {{.Case}} - {{.MetricName}}
 
-Users | {{- range .KubearmorResourceUsages }} {{ .Name }}  | {{- end }} | Throughput (req/s) | Percentage Drop | {{- range .ResourceUsages }} {{ .Name }}  | {{- end }} |
+Users | {{- range .KubearmorResourceUsages }} {{ .Name }}  | {{- end }} Throughput (req/s) | Percentage Drop | {{- range .ResourceUsages }} {{ .Name }}  | {{- end }} |
 --  |{{- range .KubearmorResourceUsages }}--  |  --{{- end }}|  --  |  --  |{{- range .ResourceUsages }}--  |  --{{- end }}|
  {{.Users}} | {{- range .KubearmorResourceUsages }}CPU={{ .CPU }}, Memory={{ .Memory }} | {{- end }} | | {{.Throughput}} | {{ .PercentageDrop }} | {{- range .ResourceUsages }}CPU={{ .CPU }}, Memory={{ .Memory }} | {{- end }} |
 

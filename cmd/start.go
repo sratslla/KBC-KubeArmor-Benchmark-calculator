@@ -490,12 +490,12 @@ func calculateBenchMark(promClient v1.API, scenario CaseEnum, Metric string) {
 
 	kubearmorQueries := map[string]map[string]string{
 		"KUBEARMOR": {
-			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"kubearmor-bpf-containerd-.*", container="", namespace="kubeamor"}[5m])) * 1000`,
-			"memory": `sum(container_memory_usage_bytes{pod=~"kubearmor-bpf-containerd-.*", namespace="kubeamor"}) / 1024 / 1024`,
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"kubearmor-bpf-containerd-.*", container="", namespace="kubearmor"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"kubearmor-bpf-containerd-.*", namespace="kubearmor"}) / 1024 / 1024`,
 		},
 		"KUBEARMOR-RELAY": {
-			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"kubearmor-relay-.*", container="", namespace="kubeamor"}[5m])) * 1000`,
-			"memory": `sum(container_memory_usage_bytes{pod=~"kubearmor-relay-.*", namespace="kubeamor"}) / 1024 / 1024`,
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"kubearmor-relay-.*", container="", namespace="kubearmor"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"kubearmor-relay-.*", namespace="kubearmor"}) / 1024 / 1024`,
 		},
 	}
 
