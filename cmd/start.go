@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"regexp"
@@ -145,6 +147,37 @@ var startCmd = &cobra.Command{
 		time.Sleep(2 * time.Minute)
 
 		calculateBenchMark(promClient, WithoutKubeArmor, "none")
+		calculateBenchMark(promClient, WithKubeArmorWithPolicy, "trailonly")
+
+		templateContent, err := ioutil.ReadFile("../report_template.md")
+		if err != nil {
+			fmt.Println("Error reading template file:", err)
+			return
+		}
+
+		// Create a new template and parse the Markdown template content
+		tmpl, err := template.New("markdown").Parse(string(templateContent))
+		if err != nil {
+			fmt.Println("Error parsing template:", err)
+			return
+		}
+
+		// Create a file to write the Markdown content
+		file, err := os.Create("final_report.md")
+		if err != nil {
+			fmt.Println("Error creating file:", err)
+			return
+		}
+		defer file.Close()
+
+		// Execute the template and write the content to the file
+		err = tmpl.Execute(file, finalReport)
+		if err != nil {
+			fmt.Println("Error executing template:", err)
+			return
+		}
+
+		fmt.Println("Markdown file created successfully!")
 
 		deployments := []string{
 			"cartservice",
@@ -473,6 +506,10 @@ func calculateBenchMark(promClient v1.API, scenario CaseEnum, Metric string) {
 	if err != nil {
 		fmt.Println("Error querying Prometheus for Locust metrics:", err)
 		return
+	}
+
+	if scenario == "WithoutKubeArmor" {
+		defaultThroughput = locustThroughputResult
 	}
 	partialReport := SingleCaseReport{
 		Case:           scenario,
