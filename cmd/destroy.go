@@ -43,6 +43,12 @@ var destroyCmd = &cobra.Command{
 			fmt.Println("Error deleting manifest:", err)
 			os.Exit(1)
 		}
+		cmdhpa := exec.Command("kubectl", "delete", "hpa", "--all")
+		output, err := cmdhpa.CombinedOutput()
+		if err != nil {
+			fmt.Errorf("error applying manifest: %v\n%s", err, output)
+		}
+		fmt.Println("Resources Deleted Successfully.")
 	},
 }
 
