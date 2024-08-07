@@ -148,7 +148,6 @@ var startCmd = &cobra.Command{
 
 		calculateBenchMark(promClient, WithoutKubeArmor, "")
 
-		// TODO check may be one missing
 		deployments := []string{
 			"cartservice",
 			"currencyservice",

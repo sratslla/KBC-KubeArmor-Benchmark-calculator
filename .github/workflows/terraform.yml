@@ -42,12 +42,10 @@ jobs:
       id: cli_output
       run: |
         git clone https://github.com/sratslla/KBC-KubeArmor-Benchmark-calculator.git
-        echo "A"
         cd KBC-KubeArmor-Benchmark-calculator
-        echo "B"
         go build -o KBC main.go
-        echo "C"
-        output=$(./KBC greet)
+        ./KBC start
+        output=$(cat final_report.md)
         echo "KBC tool output:"
         echo "$output"
         echo "$output" > kbc_output.txt
