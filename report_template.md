@@ -12,6 +12,6 @@ You can setup the benchmarking environment by following [this](https://github.co
 
 Users | Kubearmor CPU | Kubearmor Relay CPU (m) | Kubearmor Memory | Kubearmor Relay Memory | Throughput (req/s) | Percentage Drop | {{- range .ResourceUsages }}CPU ({{ .Name }}), Memory ({{ .Name }}) | {{- end }} |
 --  |  --  |  --  |  --  |  --  |  --  |  --  |{{- range .ResourceUsages }}--  |  --{{- end }}|
- {{.USER}} | - | - | - | - | {{.Throughput}} | {{ .PercentageDrop }} | {{- range .ResourceUsages }}CPU={{ .CPU }}, Memory={{ .Memory }} | {{- end }} |
+ {{.Users}} | - | - | - | - | {{.Throughput}} | {{ .PercentageDrop }} | {{- range .ResourceUsages }}CPU={{ .CPU }}, Memory={{ .Memory }} | {{- end }} |
 
 {{- end }}
