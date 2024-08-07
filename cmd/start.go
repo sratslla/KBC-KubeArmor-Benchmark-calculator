@@ -307,6 +307,7 @@ func applyManifestFromGitHub(repoURL, yamlFilePath string) error {
 	cmd.Stdout = &output
 	err := cmd.Run()
 	if err != nil {
+		fmt.Println("error applying manifest", output.String())
 		return fmt.Errorf("error applying manifest: %v\n%s", err, output.String())
 	}
 	fmt.Println("Manifest applied successfully.", output.String())
