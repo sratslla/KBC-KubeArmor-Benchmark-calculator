@@ -655,6 +655,11 @@ func printFinalReport(report FinalReport) {
 		fmt.Printf("\nCase: %s\n", caseReport.Case)
 		fmt.Printf("Metric Name: %s\n", caseReport.MetricName)
 		fmt.Printf("Users: %d\n", caseReport.Users)
+		for _, usage := range caseReport.KubearmorResourceUsages {
+			fmt.Printf("  Service: %s\n", usage.Name)
+			fmt.Printf("    CPU: %.2f\n", usage.CPU)
+			fmt.Printf("    Memory: %.2f MB\n", usage.Memory)
+		}
 		fmt.Printf("Throughput: %.2f\n", caseReport.Throughput)
 		fmt.Printf("Percentage Drop: %.2f%%\n", caseReport.PercentageDrop)
 		fmt.Println("Resource Usages:")
