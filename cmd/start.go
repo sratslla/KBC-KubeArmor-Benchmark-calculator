@@ -70,7 +70,7 @@ var startCmd = &cobra.Command{
 		manifestPaths := []string{
 			"kubernetes-manifests.yaml",
 			"loadgenerator_ui.yaml",
-			"kube-static-metrics.yaml",
+			// "kube-static-metrics.yaml",
 			"prometheusComponent.yaml",
 		}
 		for _, manifestmanifestPath := range manifestPaths {
