@@ -44,37 +44,38 @@ jobs:
         git clone https://github.com/sratslla/KBC-KubeArmor-Benchmark-calculator.git
         cd KBC-KubeArmor-Benchmark-calculator
         go build -o KBC main.go
-        ./KBC start
-        output=$(cat final_report.md)
-        echo "KBC tool output:"
-        echo "$output"
-        echo "$output" > kbc_output.txt
-        echo "KBC_OUTPUT<<EOF" >> $GITHUB_ENV
-        echo "$output" >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
+        output1 = $(kubectl apply -f https://raw.githubusercontent.com/sratslla/KBC-KubeArmor-Benchmark-calculator/main/manifests/kube-static-metrics.yaml)
+        echo "$output1"
+    #     output=$(cat final_report.md)
+    #     echo "KBC tool output:"
+    #     echo "$output"
+    #     echo "$output" > kbc_output.txt
+    #     echo "KBC_OUTPUT<<EOF" >> $GITHUB_ENV
+    #     echo "$output" >> $GITHUB_ENV
+    #     echo "EOF" >> $GITHUB_ENV
 
-    - name: Checkout Wiki Repository
-      uses: actions/checkout@v3
-      with:
-        repository: sratslla/KBC-KubeArmor-Benchmark-calculator.wiki
-        path: ./wiki
-        token: ${{ secrets.GH_PAT }}
+    # - name: Checkout Wiki Repository
+    #   uses: actions/checkout@v3
+    #   with:
+    #     repository: sratslla/KBC-KubeArmor-Benchmark-calculator.wiki
+    #     path: ./wiki
+    #     token: ${{ secrets.GH_PAT }}
     
-    - name: Configure Git
-      run: |
-        git config --global user.email "action@github.com"
-        git config --global user.name "GitHub Action"
+    # - name: Configure Git
+    #   run: |
+    #     git config --global user.email "action@github.com"
+    #     git config --global user.name "GitHub Action"
 
-    - name: Update Wiki with CLI Output
-      run: |
-        echo "## CLI Tool Output" > ./wiki/CLI-Tool-Output.md
-        echo "$CLI_OUTPUT" >> ./wiki/CLI-Tool-Output.md
+    # - name: Update Wiki with CLI Output
+    #   run: |
+    #     echo "## CLI Tool Output" > ./wiki/CLI-Tool-Output.md
+    #     echo "$CLI_OUTPUT" >> ./wiki/CLI-Tool-Output.md
 
-    - name: Commit and Push Changes
-      env:
-        GH_PAT: ${{ secrets.GH_PAT }}
-      run: |
-        cd wiki
-        git add CLI-Tool-Output.md
-        git commit -m "Update KBC Tool Output"
-        git push https://GH_PAT@github.com/sratslla/KBC-KubeArmor-Benchmark-calculator.wiki.git
+    # - name: Commit and Push Changes
+    #   env:
+    #     GH_PAT: ${{ secrets.GH_PAT }}
+    #   run: |
+    #     cd wiki
+    #     git add CLI-Tool-Output.md
+    #     git commit -m "Update KBC Tool Output"
+    #     git push https://GH_PAT@github.com/sratslla/KBC-KubeArmor-Benchmark-calculator.wiki.git
