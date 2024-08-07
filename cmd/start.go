@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/api"
@@ -16,6 +17,40 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type CaseEnum string
+
+const (
+	WithoutKubeArmor        CaseEnum = "WithoutKubeArmor"
+	WithKubeArmorWithPolicy CaseEnum = "WithKubeArmorWithPolicy"
+	WithKubeArmorVisibility CaseEnum = "WithKubeArmorVisibility"
+)
+
+type ResourceUsage struct {
+	Name   string
+	CPU    float32
+	Memory float32
+}
+
+// WK WOKP WOKV
+type SingleCaseReport struct {
+	Case           CaseEnum // Case type: WithoutKubeArmor, WithKubeArmor, WithKubeArmorWithPolicy, WithKubeArmorVisibility
+	MetricName     string   // Metric type: policy type, visibility type, none
+	Users          int32
+	Throughput     float32
+	PercentageDrop float32
+	ResourceUsages []ResourceUsage // List of resource usages
+}
+
+type FinalReport struct {
+	Reports []SingleCaseReport
+}
+
+var finalReport FinalReport
+
+var defaultThroughput float32
+
+var defaultUsers int32 = 300
+
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the benchmark process and apply all the relevant  resources.",
@@ -23,6 +58,7 @@ var startCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("start called")
 		// Check if cluster is running then apply manifest files and start autoscalling
+
 		if isKubernetesClusterRunning() {
 			fmt.Println("Kubernetes cluster is running ")
 		} else {
@@ -56,7 +92,7 @@ var startCmd = &cobra.Command{
 		autoscaleDeployment("shippingservice", 50, 2, 400)
 		autoscaleDeployment("adservice", 50, 1, 400)
 
-		// TODO - Automatically locust start using flag
+		// TODO - Automatically locust start using flag - DONE
 
 		// Start the benchmark
 		time.Sleep(1 * time.Minute)
@@ -106,9 +142,9 @@ var startCmd = &cobra.Command{
 		}
 
 		// waiting 1 min for resources to stabalization and 10 mins for calculating avg
-		time.Sleep(11 * time.Minute)
+		time.Sleep(2 * time.Minute)
 
-		calculateBenchMark(promClient)
+		calculateBenchMark(promClient, WithoutKubeArmor, "none")
 
 		deployments := []string{
 			"cartservice",
@@ -172,27 +208,29 @@ var startCmd = &cobra.Command{
 			fmt.Printf("Error configuring kubearmor relay: %v\n", err)
 			return
 		}
+		// time.Sleep(5 * time.Minute)
+		// calculateBenchMark(promClient, "WK_NO")
 
-		fmt.Println("exec3 called")
-		time.Sleep(5 * time.Minute)
-		calculateBenchMark(promClient)
+		// fmt.Println("exec3 called")
+		// time.Sleep(5 * time.Minute)
+		// calculateBenchMark(promClient, "V_NO")
 
-		changeVisiblity("process")
-		time.Sleep(5 * time.Minute)
-		calculateBenchMark(promClient)
+		// changeVisiblity("process")
+		// time.Sleep(5 * time.Minute)
+		// calculateBenchMark(promClient, "V_P")
 
-		changeVisiblity("process, file")
-		time.Sleep(5 * time.Minute)
-		calculateBenchMark(promClient)
+		// changeVisiblity("process, file")
+		// time.Sleep(5 * time.Minute)
+		// calculateBenchMark(promClient, "V_PF")
 
-		changeVisiblity("process, network")
-		time.Sleep(5 * time.Minute)
-		calculateBenchMark(promClient)
+		// changeVisiblity("process, network")
+		// time.Sleep(5 * time.Minute)
+		// calculateBenchMark(promClient, "V_PN")
 
-		changeVisiblity("process, network, file")
-		time.Sleep(5 * time.Minute)
-		calculateBenchMark(promClient)
-		changeVisiblity("none")
+		// changeVisiblity("process, network, file")
+		// time.Sleep(5 * time.Minute)
+		// calculateBenchMark(promClient, "V_PNF")
+		// changeVisiblity("none")
 
 		// Apply Policies and check
 		// Process Policy
@@ -201,7 +239,7 @@ var startCmd = &cobra.Command{
 			fmt.Println("Error applying manifest:", err)
 		}
 		time.Sleep(5 * time.Minute)
-		calculateBenchMark(promClient)
+		// calculateBenchMark(promClient, "WK_P")
 
 		// Process and Network Policy
 		err = applyManifestFromGitHub(REPO_URL, "policy-file.yaml")
@@ -209,7 +247,7 @@ var startCmd = &cobra.Command{
 			fmt.Println("Error applying manifest:", err)
 		}
 		time.Sleep(5 * time.Minute)
-		calculateBenchMark(promClient)
+		// calculateBenchMark(promClient, "WK_PNF")
 
 		// Process, Network and File Policy
 		// err = applyManifestFromGitHub(REPO_URL, "policy-process.yaml")
@@ -218,6 +256,28 @@ var startCmd = &cobra.Command{
 		// }
 		// calculateBenchMark(promClient)
 
+		// READ AND UPDATE MD FILE
+		// templateFile := "result.md"
+		// content, err := ioutil.ReadFile(templateFile)
+		// if err != nil {
+		// 	fmt.Printf("Error reading template file: %v\n", err)
+		// 	return
+		// }
+
+		// updatedContent := string(content)
+		// for key, value := range placeholders {
+		// 	placeholder := fmt.Sprintf("{{%s}}", key)
+		// 	updatedContent = strings.ReplaceAll(updatedContent, placeholder, value)
+		// }
+
+		// outputFile := "result.md"
+		// err = ioutil.WriteFile(outputFile, []byte(updatedContent), 0644)
+		// if err != nil {
+		// 	fmt.Printf("Error writing output file: %v\n", err)
+		// 	return
+		// }
+
+		fmt.Println("Markdown file updated successfully!")
 	},
 }
 
@@ -327,70 +387,118 @@ func getExternalIP() (string, error) {
 	return "", fmt.Errorf("no external IP found")
 }
 
-func calculateBenchMark(promClient v1.API) {
-	CPUQueries := map[string]string{
-		"Frontend":              `sum(rate(container_cpu_usage_seconds_total{pod=~"frontend-.*", container="", namespace="default"}[5m])) * 1000`,
-		"Adservice":             `sum(rate(container_cpu_usage_seconds_total{pod=~"adservice-.*", container="", namespace="default"}[5m])) * 1000`,
-		"Cartservice":           `sum(rate(container_cpu_usage_seconds_total{pod=~"cartservice-.*", container="", namespace="default"}[5m])) * 1000`,
-		"Checkoutservice":       `sum(rate(container_cpu_usage_seconds_total{pod=~"checkoutservice-.*", container="", namespace="default"}[5m])) * 1000`,
-		"Currencyservice":       `sum(rate(container_cpu_usage_seconds_total{pod=~"currencyservice-.*", container="", namespace="default"}[5m])) * 1000`,
-		"Emailservice":          `sum(rate(container_cpu_usage_seconds_total{pod=~"emailservice-.*", container="", namespace="default"}[5m])) * 1000`,
-		"Loadgenerator":         `sum(rate(container_cpu_usage_seconds_total{pod=~"loadgenerator-.*", container="", namespace="default"}[5m])) * 1000`,
-		"Paymentservice":        `sum(rate(container_cpu_usage_seconds_total{pod=~"paymentservice-.*", container="", namespace="default"}[5m])) * 1000`,
-		"Productcatalogservice": `sum(rate(container_cpu_usage_seconds_total{pod=~"productcatalogservice-.*", container="", namespace="default"}[5m])) * 1000`,
-		"Recommendationservice": `sum(rate(container_cpu_usage_seconds_total{pod=~"recommendationservice-.*", container="", namespace="default"}[5m])) * 1000`,
-		"Redis":                 `sum(rate(container_cpu_usage_seconds_total{pod=~"redis-.*", container="", namespace="default"}[5m])) * 1000`,
-		"Shippingservice":       `sum(rate(container_cpu_usage_seconds_total{pod=~"shippingservice-.*", container="", namespace="default"}[5m])) * 1000`,
-	}
-	MemoryQueries := map[string]string{
-		"Frontend":              `sum(container_memory_usage_bytes{pod=~"frontend-.*", namespace="default"}) / 1024 / 1024`,
-		"Adservice":             `sum(container_memory_usage_bytes{pod=~"adservice-.*", namespace="default"}) / 1024 / 1024`,
-		"Cartservice":           `sum(container_memory_usage_bytes{pod=~"cartservice-.*", namespace="default"}) / 1024 / 1024`,
-		"Checkoutservice":       `sum(container_memory_usage_bytes{pod=~"checkoutservice-.*", namespace="default"}) / 1024 / 1024`,
-		"Currencyservice":       `sum(container_memory_usage_bytes{pod=~"currencyservice-.*", namespace="default"}) / 1024 / 1024`,
-		"Emailservice":          `sum(container_memory_usage_bytes{pod=~"emailservice-.*", namespace="default"}) / 1024 / 1024`,
-		"Loadgenerator":         `sum(container_memory_usage_bytes{pod=~"loadgenerator-.*", namespace="default"}) / 1024 / 1024`,
-		"Paymentservice":        `sum(container_memory_usage_bytes{pod=~"paymentservice-.*", namespace="default"}) / 1024 / 1024`,
-		"Productcatalogservice": `sum(container_memory_usage_bytes{pod=~"productcatalogservice-.*", namespace="default"}) / 1024 / 1024`,
-		"Recommendationservice": `sum(container_memory_usage_bytes{pod=~"recommendationservice-.*", namespace="default"}) / 1024 / 1024`,
-		"Redis":                 `sum(container_memory_usage_bytes{pod=~"redis-.*", namespace="default"}) / 1024 / 1024`,
-		"Shippingservice":       `sum(container_memory_usage_bytes{pod=~"shippingservice-.*", namespace="default"}) / 1024 / 1024`,
+func calculateBenchMark(promClient v1.API, scenario CaseEnum, Metric string) {
+	// TODO - Use fmt.Sprintf and add the service name from a variable.
+	queries := map[string]map[string]string{
+		"FRONTEND": {
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"frontend-.*", container="", namespace="default"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"frontend-.*", namespace="default"}) / 1024 / 1024`,
+		},
+		"AD": {
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"adservice-.*", container="", namespace="default"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"adservice-.*", namespace="default"}) / 1024 / 1024`,
+		},
+		"CART": {
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"cartservice-.*", container="", namespace="default"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"cartservice-.*", namespace="default"}) / 1024 / 1024`,
+		},
+		"CHECKOUT": {
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"checkoutservice-.*", container="", namespace="default"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"checkoutservice-.*", namespace="default"}) / 1024 / 1024`,
+		},
+		"CURRENCY": {
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"currencyservice-.*", container="", namespace="default"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"currencyservice-.*", namespace="default"}) / 1024 / 1024`,
+		},
+		"EMAIL": {
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"emailservice-.*", container="", namespace="default"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"emailservice-.*", namespace="default"}) / 1024 / 1024`,
+		},
+		"LOAD": {
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"loadgenerator-.*", container="", namespace="default"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"loadgenerator-.*", namespace="default"}) / 1024 / 1024`,
+		},
+		"PAYMENT": {
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"paymentservice-.*", container="", namespace="default"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"paymentservice-.*", namespace="default"}) / 1024 / 1024`,
+		},
+		"PRODUCT": {
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"productcatalogservice-.*", container="", namespace="default"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"productcatalogservice-.*", namespace="default"}) / 1024 / 1024`,
+		},
+		"RECOMMENDATION": {
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"recommendationservice-.*", container="", namespace="default"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"recommendationservice-.*", namespace="default"}) / 1024 / 1024`,
+		},
+		"REDIS": {
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"redis-.*", container="", namespace="default"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"redis-.*", namespace="default"}) / 1024 / 1024`,
+		},
+		"SHIPPING": {
+			"cpu":    `sum(rate(container_cpu_usage_seconds_total{pod=~"shippingservice-.*", container="", namespace="default"}[5m])) * 1000`,
+			"memory": `sum(container_memory_usage_bytes{pod=~"shippingservice-.*", namespace="default"}) / 1024 / 1024`,
+		},
 	}
 
-	fmt.Printf("CPU Usage \n")
-	for serviceName, query := range CPUQueries {
-		result, err := QueryPrometheus(promClient, query)
+	var resourceUsages []ResourceUsage
+
+	for serviceName, queryMap := range queries {
+		cpuQuery := queryMap["cpu"]
+		memoryQuery := queryMap["memory"]
+
+		cpuTempResult, err := QueryPrometheus(promClient, cpuQuery)
 		if err != nil {
 			fmt.Printf("Error querying Prometheus for CPU metrics (%s): %v\n", serviceName, err)
-			return
+			continue
 		}
-		fmt.Printf("%s CPU usage: %v\n", serviceName, result)
-	}
-	fmt.Printf("Memory \n")
-	for serviceName, query := range MemoryQueries {
-		result, err := QueryPrometheus(promClient, query)
+		memoryTempResult, err := QueryPrometheus(promClient, memoryQuery)
 		if err != nil {
 			fmt.Printf("Error querying Prometheus for Memory metrics (%s): %v\n", serviceName, err)
-			return
+			continue
 		}
-		fmt.Printf("%s Memory usage: %v\n", serviceName, result)
+		cpuResult, _ := parseUsage(cpuTempResult)
+		memoryResult, _ := parseUsage(memoryTempResult)
+
+		resourceUsage := ResourceUsage{
+			Name:   serviceName,
+			CPU:    cpuResult,
+			Memory: memoryResult,
+		}
+		resourceUsages = append(resourceUsages, resourceUsage)
 	}
 
-	locustThroughput := `avg_over_time(locust_requests_current_rps{job="locust", name="Aggregated"}[5m])`
-	locustThroughputResult, err := QueryPrometheus(promClient, locustThroughput)
+	locustThroughputQuery := `avg_over_time(locust_requests_current_rps{job="locust", name="Aggregated"}[5m])`
+	locustThroughput, err := QueryPrometheus(promClient, locustThroughputQuery)
+	locustThroughputResult, _ := parseUsage(locustThroughput)
 	if err != nil {
 		fmt.Println("Error querying Prometheus for Locust metrics:", err)
 		return
 	}
-	re := regexp.MustCompile(`=>\s+([0-9.]+)\s+@`)
-	match := re.FindStringSubmatch(locustThroughputResult.String())
-	if len(match) > 1 {
-		value := match[1]
-		fmt.Println("Locust Throughput Average for last 10mins:", value)
-	} else {
-		fmt.Println("Error: Could not parse the result")
+	partialReport := SingleCaseReport{
+		Case:           scenario,
+		MetricName:     Metric,
+		Users:          defaultUsers,
+		Throughput:     locustThroughputResult,
+		PercentageDrop: ((defaultThroughput - locustThroughputResult) / defaultThroughput) * 100,
+		ResourceUsages: resourceUsages,
 	}
-	fmt.Println("=========================================")
+	finalReport.Reports = append(finalReport.Reports, partialReport)
+	printFinalReport(finalReport)
+}
+
+func parseUsage(result model.Value) (float32, error) {
+	re := regexp.MustCompile(`=>\s+([0-9.]+)\s+@`)
+	matches := re.FindStringSubmatch(result.String())
+	if len(matches) > 1 {
+		// Convert the extracted string to float32
+		value, err := strconv.ParseFloat(matches[1], 32)
+		if err != nil {
+			return 0, fmt.Errorf("unable to convert string to float32: %v", err)
+		}
+		return float32(value), nil
+	} else {
+		return 0, fmt.Errorf("unable to parse result: %s", result)
+	}
 }
 
 func getCurrentReplicas(deploymentName string) (int, error) {
@@ -485,4 +593,20 @@ func changeVisiblity(visiblityMode string) error {
 	}
 	fmt.Printf("Namespace annotated with visibility type %s successfully.\n", visiblityMode)
 	return nil
+}
+func printFinalReport(report FinalReport) {
+	fmt.Println("Final Report:")
+	for _, caseReport := range report.Reports {
+		fmt.Printf("\nCase: %s\n", caseReport.Case)
+		fmt.Printf("Metric Name: %s\n", caseReport.MetricName)
+		fmt.Printf("Users: %d\n", caseReport.Users)
+		fmt.Printf("Throughput: %.2f\n", caseReport.Throughput)
+		fmt.Printf("Percentage Drop: %.2f%%\n", caseReport.PercentageDrop)
+		fmt.Println("Resource Usages:")
+		for _, usage := range caseReport.ResourceUsages {
+			fmt.Printf("  Service: %s\n", usage.Name)
+			fmt.Printf("    CPU: %.2f\n", usage.CPU)
+			fmt.Printf("    Memory: %.2f MB\n", usage.Memory)
+		}
+	}
 }

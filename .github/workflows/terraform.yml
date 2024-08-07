@@ -77,6 +77,6 @@ jobs:
         GH_PAT: ${{ secrets.GH_PAT }}
       run: |
         cd wiki
-        git add KBC-Tool-Output.md
+        git add CLI-Tool-Output.md
         git commit -m "Update KBC Tool Output"
         git push https://GH_PAT@github.com/sratslla/KBC-KubeArmor-Benchmark-calculator.wiki.git
