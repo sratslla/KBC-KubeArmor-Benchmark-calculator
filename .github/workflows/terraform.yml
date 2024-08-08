@@ -43,10 +43,9 @@ jobs:
         git clone https://github.com/sratslla/KBC-KubeArmor-Benchmark-calculator.git
         cd KBC-KubeArmor-Benchmark-calculator
         go build -o KBC main.go
-        output=$(cat report_template.md)
-        cat report_template.md > kbc_output.md
+        ./KBC start
         echo "KBC tool output:"
-        cat kbc_output.md
+        cat final_report.md
 
     - name: Checkout Wiki Repository
       uses: actions/checkout@v3
@@ -66,8 +65,7 @@ jobs:
         pwd
         echo "Files in directory:"
         ls -al
-        # Copy the output file to the wiki directory
-        cp report_template.md ./wiki/CLI-Tool-Output.md
+        cp final_report.md ./wiki/CLI-Tool-Output.md
 
     - name: Commit and Push Changes
       env:
