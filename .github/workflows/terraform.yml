@@ -68,7 +68,6 @@ jobs:
         echo "Files in directory:"
         ls -al
         # Copy the output file to the wiki directory
-        cp ../KBC-KubeArmor-Benchmark-calculator/kbc_output.txt ./wiki/CLI-Tool-Output.md
         cp report_template.md ./wiki/CLI-Tool-Output.md
 
     - name: Commit and Push Changes
