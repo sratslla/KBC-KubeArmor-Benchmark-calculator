@@ -13,15 +13,16 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
     - name: Set up Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v1
       with:
-        version: 'latest'
         project_id: ${{ secrets.GCP_PROJECT_ID }}
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
-
-    - name: Authenticate to Google Cloud
-      run: gcloud auth activate-service-account --key-file=${{ secrets.GCP_SA_KEY }}
+        install_components: kubectl
 
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
@@ -33,12 +34,68 @@ jobs:
     - name: Apply Terraform configuration
       run: terraform apply -auto-approve
 
-    - name: Set up kubectl
-      run: |
-        gcloud container clusters get-credentials $(terraform output -raw kubernetes_cluster_name) --region us-central1
-        echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
+    - name: Get GKE Cluster Credentials
+      run: gcloud container clusters get-credentials example-cluster --zone us-central1-c --project ${{ secrets.GCP_PROJECT_ID }}
 
-    # - name: Run CLI tool
-    #   run: |
-    #     # Replace 'your-cli-tool' with the actual CLI tool you want to run
-    #     your-cli-tool --option value
+    - name: Run CLI Tool on GKE Cluster
+      id: cli_output
+      run: |
+        git clone https://github.com/sratslla/KBC-KubeArmor-Benchmark-calculator.git
+        cd KBC-KubeArmor-Benchmark-calculator
+        go build -o KBC main.go
+        output=$(cat report_template.md)
+        cat report_template.md > kbc_output.md
+        echo "KBC tool output:"
+        cat kbc_output.md
+
+    - name: Checkout Wiki Repository
+      uses: actions/checkout@v3
+      with:
+        repository: sratslla/KBC-KubeArmor-Benchmark-calculator.wiki
+        path: ./wiki
+        token: ${{ secrets.GH_PAT }}
+    
+    - name: Configure Git
+      run: |
+        git config --global user.email "action@github.com"
+        git config --global user.name "GitHub Action"
+
+    - name: Update Wiki with CLI Output
+      run: |
+        echo "Current directory:"
+        pwd
+        echo "Files in directory:"
+        ls -al
+        # Copy the output file to the wiki directory
+        cp report_template.md ./wiki/CLI-Tool-Output.md
+
+    - name: Commit and Push Changes
+      env:
+        GH_PAT: ${{ secrets.GH_PAT }}
+      run: |
+        cd wiki
+        git add CLI-Tool-Output.md
+        git commit -m "Update KBC Tool Output"
+        git push https://GH_PAT@github.com/sratslla/KBC-KubeArmor-Benchmark-calculator.wiki.git
+
+
+
+
+#     - name: Extract PR Number
+#     id: extract_pr_number
+#     run: |
+#       echo "PR_NUMBER=$(echo $GITHUB_REF | grep -o '[0-9]*$')" >> $GITHUB_ENV
+
+#   - name: Update Wiki with CLI Output
+#     run: |
+#       echo "## CLI Tool Output" > ./wiki/CLI-Tool-Output-PR-${{ env.PR_NUMBER }}.md
+#       echo "$CLI_OUTPUT" >> ./wiki/CLI-Tool-Output-PR-${{ env.PR_NUMBER }}.md
+
+#   - name: Commit and Push Changes
+#     env:
+#       GH_PAT: ${{ secrets.GH_PAT }}
+#     run: |
+#       cd wiki
+#       git add CLI-Tool-Output-PR-${{ env.PR_NUMBER }}.md
+#       git commit -m "Update KBC Tool Output for PR #${{ env.PR_NUMBER }}"
+#       git push https://GH_PAT@github.com/sratslla/KBC-KubeArmor-Benchmark-calculator.wiki.git
