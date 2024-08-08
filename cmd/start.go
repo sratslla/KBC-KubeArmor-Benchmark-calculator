@@ -145,7 +145,7 @@ var startCmd = &cobra.Command{
 		}
 
 		// waiting 1 min for resources to stabalization and 10 mins for calculating avg
-		time.Sleep(1 * time.Minute)
+		time.Sleep(11 * time.Minute)
 
 		calculateBenchMark(promClient, WithoutKubeArmor, "")
 
@@ -213,23 +213,23 @@ var startCmd = &cobra.Command{
 		}
 
 		fmt.Println("exec3 called")
-		time.Sleep(1 * time.Minute)
+		time.Sleep(6 * time.Minute)
 		calculateBenchMark(promClient, WithKubeArmorVisibility, "none")
 
 		changeVisiblity("process")
-		time.Sleep(1 * time.Minute)
+		time.Sleep(6 * time.Minute)
 		calculateBenchMark(promClient, WithKubeArmorVisibility, "process")
 
 		changeVisiblity("process, file")
-		time.Sleep(1 * time.Minute)
+		time.Sleep(6 * time.Minute)
 		calculateBenchMark(promClient, WithKubeArmorVisibility, "process & file")
 
 		changeVisiblity("process, network")
-		time.Sleep(1 * time.Minute)
+		time.Sleep(6 * time.Minute)
 		calculateBenchMark(promClient, WithKubeArmorVisibility, "process & network")
 
 		changeVisiblity("process, network, file")
-		time.Sleep(1 * time.Minute)
+		time.Sleep(6 * time.Minute)
 		calculateBenchMark(promClient, WithKubeArmorVisibility, "process, network & file")
 		changeVisiblity("none")
 
@@ -240,7 +240,7 @@ var startCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println("Error applying manifest:", err)
 		}
-		time.Sleep(1 * time.Minute)
+		time.Sleep(6 * time.Minute)
 		calculateBenchMark(promClient, WithKubeArmorPolicy, "process")
 
 		// Process and File Policy.
@@ -248,7 +248,7 @@ var startCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println("Error applying manifest:", err)
 		}
-		time.Sleep(1 * time.Minute)
+		time.Sleep(6 * time.Minute)
 		calculateBenchMark(promClient, WithKubeArmorPolicy, "process & file")
 
 		// Process, File and Network.
@@ -256,7 +256,7 @@ var startCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println("Error applying manifest:", err)
 		}
-		time.Sleep(1 * time.Minute)
+		time.Sleep(6 * time.Minute)
 		calculateBenchMark(promClient, WithKubeArmorPolicy, "process, file and network")
 
 		// Write the data to markdown file.
