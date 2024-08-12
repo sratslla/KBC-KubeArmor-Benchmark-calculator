@@ -136,7 +136,7 @@ var startCmd = &cobra.Command{
 				}
 			}
 
-			if locustUsers >= 300 {
+			if locustUsers >= int(defaultUsers) {
 				fmt.Println("locust users reached 300. data will be fetched now to calculate avg benchmark.")
 				break
 			}
@@ -258,6 +258,9 @@ var startCmd = &cobra.Command{
 		}
 		time.Sleep(6 * time.Minute)
 		calculateBenchMark(promClient, WithKubeArmorPolicy, "process, file and network")
+
+		// print final report
+		printFinalReport(finalReport)
 
 		// Write the data to markdown file.
 		templateContent, err := ioutil.ReadFile("report_template.md")
@@ -538,7 +541,6 @@ func calculateBenchMark(promClient v1.API, scenario CaseEnum, Metric string) {
 		ResourceUsages:          resourceUsages,
 	}
 	finalReport.Reports = append(finalReport.Reports, partialReport)
-	printFinalReport(finalReport)
 }
 
 func parseUsage(result model.Value) (float32, error) {

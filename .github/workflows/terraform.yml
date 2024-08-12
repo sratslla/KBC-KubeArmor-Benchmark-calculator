@@ -73,13 +73,13 @@ jobs:
 
     - name: Update Wiki with CLI Output
       run: |
-        echo "$CLI_OUTPUT" >> ./wiki/CLI-Tool-Output-PR-${{ env.PR_NUMBER }}.md
+        echo "$CLI_OUTPUT" >> ./wiki/CLI-Tool-Output-PR-10-nodes${{ env.PR_NUMBER }}.md
 
     - name: Commit and Push Changes
       env:
         GH_PAT: ${{ secrets.GH_PAT }}
       run: |
         cd wiki
-        git add CLI-Tool-Output-PR-${{ env.PR_NUMBER }}.md
+        git add CLI-Tool-Output-PR-10-nodes${{ env.PR_NUMBER }}.md
         git commit -m "Update KBC Tool Output for PR #${{ env.PR_NUMBER }}"
         git push https://GH_PAT@github.com/sratslla/KBC-KubeArmor-Benchmark-calculator.wiki.git
