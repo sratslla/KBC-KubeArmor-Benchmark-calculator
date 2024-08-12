@@ -1,6 +1,6 @@
 provider "google" {
   project = "kbc-1-426708"
-  region  = "us-central1"
+  region  = "asia-east1"
 }
 
 resource "random_id" "suffix" {
@@ -9,7 +9,7 @@ resource "random_id" "suffix" {
 
 resource "google_container_cluster" "primary" {
   name               = "example-cluster"
-  location           = "us-central1-c"
+  location           = "asia-east1-a"
   initial_node_count        = 1
   remove_default_node_pool  = true
 }
