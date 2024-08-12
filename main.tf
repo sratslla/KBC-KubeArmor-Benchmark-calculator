@@ -17,7 +17,7 @@ resource "google_container_cluster" "primary" {
 resource "google_container_node_pool" "primary_nodes" {
   cluster    = google_container_cluster.primary.name
   location   = google_container_cluster.primary.location
-  node_count = 3
+  node_count = 9
 
   node_config {
     machine_type = "e2-custom-2-4096"
