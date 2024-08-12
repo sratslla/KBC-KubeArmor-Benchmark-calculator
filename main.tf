@@ -21,6 +21,7 @@ resource "google_container_node_pool" "primary_nodes" {
 
   node_config {
     machine_type = "e2-custom-2-4096"
+    disk_size_gb = 40
   }
 }
 
@@ -31,6 +32,7 @@ resource "google_container_node_pool" "tainted_node" {
 
   node_config {
     machine_type = "e2-standard-4"
+    disk_size_gb = 40
     taint {
       key    = "color"
       value  = "blue"
