@@ -147,7 +147,7 @@ spec:
         - name: FRONTEND_ADDR
           value: "frontend:80"
         - name: USERS
-          value: "800"
+          value: "600"
         ports:
         - containerPort: 8089 # Locust UI port
       - name: locust-exporter

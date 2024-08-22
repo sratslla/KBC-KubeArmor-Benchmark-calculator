@@ -52,7 +52,7 @@ var finalReport FinalReport
 
 var defaultThroughput float32
 
-var defaultUsers int32 = 1000
+var defaultUsers int32 = 600
 
 var startCmd = &cobra.Command{
 	Use:   "start",
