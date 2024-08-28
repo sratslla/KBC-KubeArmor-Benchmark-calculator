@@ -78,6 +78,7 @@ var startCmd = &cobra.Command{
 		// Check if cluster is running then apply manifest files and start autoscalling
 
 		fmt.Println(users, hpaCPUPercentage)
+		fmt.Printf("before config and clientset")
 
 		config, err := rest.InClusterConfig()
 		if err != nil {
@@ -87,6 +88,8 @@ var startCmd = &cobra.Command{
 		if err != nil {
 			panic(err.Error())
 		}
+
+		fmt.Printf("after config and clientset")
 
 		if isKubernetesClusterRunning() {
 			fmt.Println("Kubernetes cluster is running ")
