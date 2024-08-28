@@ -26,6 +26,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 type CaseEnum string
@@ -80,7 +81,8 @@ var startCmd = &cobra.Command{
 		fmt.Println(users, hpaCPUPercentage)
 		fmt.Printf("before config and clientset")
 
-		config, err := rest.InClusterConfig()
+		kubeconfig := "/path/to/your/kubeconfig" // Provide the path to your kubeconfig file
+		config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 		if err != nil {
 			panic(err.Error())
 		}
