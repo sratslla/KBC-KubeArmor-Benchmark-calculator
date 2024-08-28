@@ -52,7 +52,8 @@ var finalReport FinalReport
 
 var defaultThroughput float32
 
-var defaultUsers int32 = 600
+var users int32 = 600
+var hpaCPUPercentage string = "50"
 
 var startCmd = &cobra.Command{
 	Use:   "start",
@@ -61,6 +62,8 @@ var startCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("start called")
 		// Check if cluster is running then apply manifest files and start autoscalling
+
+		fmt.Println(users, hpaCPUPercentage)
 
 		if isKubernetesClusterRunning() {
 			fmt.Println("Kubernetes cluster is running ")
@@ -83,17 +86,17 @@ var startCmd = &cobra.Command{
 		}
 
 		// TODO - optimize it using a Loop
-		autoscaleDeployment("cartservice", 50, 2, 400)
-		autoscaleDeployment("currencyservice", 50, 2, 400)
-		autoscaleDeployment("emailservice", 50, 2, 400)
-		autoscaleDeployment("checkoutservice", 50, 2, 400)
-		autoscaleDeployment("frontend", 50, 5, 400)
-		autoscaleDeployment("paymentservice", 50, 2, 400)
-		autoscaleDeployment("productcatalogservice", 50, 2, 400)
-		autoscaleDeployment("recommendationservice", 50, 2, 400)
-		autoscaleDeployment("redis-cart", 50, 1, 400)
-		autoscaleDeployment("shippingservice", 50, 2, 400)
-		autoscaleDeployment("adservice", 50, 1, 400)
+		autoscaleDeployment("cartservice", hpaCPUPercentage, 2, 400)
+		autoscaleDeployment("currencyservice", hpaCPUPercentage, 2, 400)
+		autoscaleDeployment("emailservice", hpaCPUPercentage, 2, 400)
+		autoscaleDeployment("checkoutservice", hpaCPUPercentage, 2, 400)
+		autoscaleDeployment("frontend", hpaCPUPercentage, 5, 400)
+		autoscaleDeployment("paymentservice", hpaCPUPercentage, 2, 400)
+		autoscaleDeployment("productcatalogservice", hpaCPUPercentage, 2, 400)
+		autoscaleDeployment("recommendationservice", hpaCPUPercentage, 2, 400)
+		autoscaleDeployment("redis-cart", hpaCPUPercentage, 1, 400)
+		autoscaleDeployment("shippingservice", hpaCPUPercentage, 2, 400)
+		autoscaleDeployment("adservice", hpaCPUPercentage, 1, 400)
 
 		// TODO - Automatically locust start using flag - DONE
 
@@ -136,7 +139,7 @@ var startCmd = &cobra.Command{
 				}
 			}
 
-			if locustUsers >= int(defaultUsers) {
+			if locustUsers >= int(users) {
 				fmt.Println("locust users reached 300. data will be fetched now to calculate avg benchmark.")
 				break
 			}
@@ -297,6 +300,8 @@ var startCmd = &cobra.Command{
 }
 
 func init() {
+	startCmd.Flags().Int32VarP(&users, "users", "u", 600, "Number of users to simulate")
+	startCmd.Flags().StringVarP(&hpaCPUPercentage, "cpuPercent", "c", "50", "CPU Percentage for HPA")
 	rootCmd.AddCommand(startCmd)
 }
 
@@ -326,9 +331,9 @@ func applyManifestFromGitHub(repoURL, yamlFilePath string) error {
 	return nil
 }
 
-func autoscaleDeployment(deploymentName string, cpuPercent, minReplicas, maxReplicas int) {
+func autoscaleDeployment(deploymentName string, cpuPercent string, minReplicas, maxReplicas int) {
 	cmd := exec.Command("kubectl", "autoscale", "deployment", deploymentName,
-		fmt.Sprintf("--cpu-percent=%d", cpuPercent),
+		fmt.Sprintf("--cpu-percent=%s", cpuPercent),
 		fmt.Sprintf("--min=%d", minReplicas),
 		fmt.Sprintf("--max=%d", maxReplicas))
 
@@ -534,7 +539,7 @@ func calculateBenchMark(promClient v1.API, scenario CaseEnum, Metric string) {
 	partialReport := SingleCaseReport{
 		Case:                    scenario,
 		MetricName:              Metric,
-		Users:                   defaultUsers,
+		Users:                   users,
 		KubearmorResourceUsages: KubearmorResourceUsages,
 		Throughput:              locustThroughputResult,
 		PercentageDrop:          ((defaultThroughput - locustThroughputResult) / defaultThroughput) * 100,
