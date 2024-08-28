@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
@@ -17,6 +18,14 @@ import (
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/spf13/cobra"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 type CaseEnum string
@@ -55,6 +64,11 @@ var defaultThroughput float32
 var users int32 = 600
 var hpaCPUPercentage string = "50"
 
+var (
+	config    *rest.Config
+	clientset *kubernetes.Clientset
+)
+
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the benchmark process and apply all the relevant  resources.",
@@ -64,6 +78,15 @@ var startCmd = &cobra.Command{
 		// Check if cluster is running then apply manifest files and start autoscalling
 
 		fmt.Println(users, hpaCPUPercentage)
+
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			panic(err.Error())
+		}
+		clientset, err = kubernetes.NewForConfig(config)
+		if err != nil {
+			panic(err.Error())
+		}
 
 		if isKubernetesClusterRunning() {
 			fmt.Println("Kubernetes cluster is running ")
@@ -306,30 +329,206 @@ func init() {
 }
 
 func isKubernetesClusterRunning() bool {
-	cmd := exec.Command("kubectl", "cluster-info")
+	// cmd := exec.Command("kubectl", "cluster-info")
 
-	var output bytes.Buffer
-	cmd.Stdout = &output
-	err := cmd.Run()
-	if err != nil {
-		return false
-	}
-	// fmt.Println(cmd, output.String())
-	return true
+	// var output bytes.Buffer
+	// cmd.Stdout = &output
+	// err := cmd.Run()
+	// if err != nil {
+	// 	return false
+	// }
+	// // fmt.Println(cmd, output.String())
+	// return true
+
+	_, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	return err == nil
 }
 
-func applyManifestFromGitHub(repoURL, yamlFilePath string) error {
-	cmd := exec.Command("kubectl", "apply", "-f", fmt.Sprintf("%s/%s", repoURL, yamlFilePath))
-	var output bytes.Buffer
-	cmd.Stdout = &output
-	err := cmd.Run()
+func applyManifestFromGitHub(repoURL, manifestPath string) error {
+	// Fetch the YAML manifest file from GitHub
+	resp, err := http.Get(fmt.Sprintf("%s/%s", repoURL, manifestPath))
 	if err != nil {
-		fmt.Println("error applying manifest", output.String())
-		return fmt.Errorf("error applying manifest: %v\n%s", err, output.String())
+		return fmt.Errorf("error fetching manifest file: %v", err)
 	}
-	fmt.Println("Manifest applied successfully.", output.String())
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to fetch manifest file, status code: %d", resp.StatusCode)
+	}
+
+	// Read the content of the manifest file
+	manifestContent, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error reading manifest content: %v", err)
+	}
+
+	// Split the YAML content by "---"
+	documents := bytes.Split(manifestContent, []byte("---"))
+
+	// Create a dynamic client
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("error creating dynamic client: %v", err)
+	}
+
+	for _, doc := range documents {
+		if len(bytes.TrimSpace(doc)) == 0 {
+			continue
+		}
+
+		// Convert YAML to unstructured.Unstructured
+		var unstructuredObj unstructured.Unstructured
+		decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(doc), 4096)
+		if err := decoder.Decode(&unstructuredObj); err != nil {
+			return fmt.Errorf("error decoding YAML to unstructured object: %v", err)
+		}
+
+		// Get the GVR (GroupVersionResource) of the resource
+		gvk := unstructuredObj.GroupVersionKind()
+		gvr, _ := meta.UnsafeGuessKindToResource(gvk)
+
+		// Get the resource interface
+		resourceClient := dynamicClient.Resource(gvr).Namespace(unstructuredObj.GetNamespace())
+		if unstructuredObj.GetNamespace() == "" {
+			resourceClient = dynamicClient.Resource(gvr)
+		}
+
+		// Apply the resource
+		_, err = resourceClient.Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
+		if err != nil && !kerrors.IsAlreadyExists(err) {
+			return fmt.Errorf("error applying resource: %v", err)
+		}
+	}
+
 	return nil
 }
+
+// func applyManifestFromGitHub(repoURL, yamlFilePath string) error {
+// 	// cmd := exec.Command("kubectl", "apply", "-f", fmt.Sprintf("%s/%s", repoURL, yamlFilePath))
+// 	// var output bytes.Buffer
+// 	// cmd.Stdout = &output
+// 	// err := cmd.Run()
+// 	// if err != nil {
+// 	// 	fmt.Println("error applying manifest", output.String())
+// 	// 	return fmt.Errorf("error applying manifest: %v\n%s", err, output.String())
+// 	// }
+// 	// fmt.Println("Manifest applied successfully.", output.String())
+// 	// return nil
+
+// 	// NEW
+// 	url := fmt.Sprintf("%s/%s", repoURL, yamlFilePath)
+// 	resp, err := http.Get(url)
+// 	if err != nil {
+// 		return fmt.Errorf("error fetching manifest: %v", err)
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusOK {
+// 		return fmt.Errorf("failed to download YAML file from GitHub: received status code %d", resp.StatusCode)
+// 	}
+
+// 	yamlData, err := ioutil.ReadAll(resp.Body)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to read YAML data: %v", err)
+// 	}
+
+// 	// Step 2: Decode the YAML into Kubernetes objects
+// 	var objs []runtime.Object
+// 	decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
+// 	for {
+// 		var obj map[string]interface{}
+// 		if err := decoder.Decode(&obj); err != nil {
+// 			if err.Error() == "EOF" {
+// 				break
+// 			}
+// 			return fmt.Errorf("failed to decode YAML: %w", err)
+// 		}
+
+// 		jsonData, err := json.Marshal(obj)
+// 		if err != nil {
+// 			return fmt.Errorf("failed to marshal map to JSON: %w", err)
+// 		}
+
+// 		unstructuredObj := &unstructured.Unstructured{}
+// 		if err := unstructuredObj.UnmarshalJSON(jsonData); err != nil {
+// 			return fmt.Errorf("failed to unmarshal JSON: %w", err)
+// 		}
+// 		objs = append(objs, unstructuredObj)
+// 	}
+
+// 	// Step 3: Apply the manifests to the Kubernetes cluster
+// 	for _, obj := range objs {
+// 		gvk := obj.GetObjectKind().GroupVersionKind()
+// 		if err := applyObject(clientset, gvk, obj); err != nil {
+// 			return fmt.Errorf("failed to apply object %s: %w", gvk.String(), err)
+// 		}
+// 	}
+
+// 	return nil
+// }
+
+// func applyObject(clientset *kubernetes.Clientset, gvk schema.GroupVersionKind, obj runtime.Object) error {
+// 	u, ok := obj.(*unstructured.Unstructured)
+// 	if !ok {
+// 		return fmt.Errorf("object is not unstructured")
+// 	}
+
+// 	m, err := meta.Accessor(u)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to access metadata: %w", err)
+// 	}
+
+// 	// Get the appropriate Kubernetes client for the resource
+// 	switch gvk.Kind {
+// 	case "Deployment":
+// 		return applyDeployment(clientset, m.GetNamespace(), u)
+// 	case "Service":
+// 		return applyService(clientset, m.GetNamespace(), u)
+// 	case "ServiceAccount":
+// 		return applyServiceAccount(clientset, m.GetNamespace(), u)
+// 	default:
+// 		return fmt.Errorf("unsupported resource kind: %s", gvk.Kind)
+// 	}
+// }
+
+// func applyDeployment(clientset *kubernetes.Clientset, namespace string, obj *unstructured.Unstructured) error {
+// 	deploymentClient := clientset.AppsV1().Deployments(namespace)
+// 	deployment := &appsv1.Deployment{}
+// 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, deployment); err != nil {
+// 		return fmt.Errorf("failed to convert unstructured object to Deployment: %w", err)
+// 	}
+// 	_, err := deploymentClient.Update(deployment, metav1.UpdateOptions{})
+// 	if err != nil {
+// 		_, err = deploymentClient.Create(deployment, metav1.CreateOptions{})
+// 	}
+// 	return err
+// }
+
+// func applyService(clientset *kubernetes.Clientset, namespace string, obj *unstructured.Unstructured) error {
+// 	serviceClient := clientset.CoreV1().Services(namespace)
+// 	service := &v1.Service{}
+// 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, service); err != nil {
+// 		return fmt.Errorf("failed to convert unstructured object to Service: %w", err)
+// 	}
+// 	_, err := serviceClient.Update(service, metav1.UpdateOptions{})
+// 	if err != nil {
+// 		_, err = serviceClient.Create(service, metav1.CreateOptions{})
+// 	}
+// 	return err
+// }
+
+// func applyServiceAccount(clientset *kubernetes.Clientset, namespace string, obj *unstructured.Unstructured) error {
+// 	serviceAccountClient := clientset.CoreV1().ServiceAccounts(namespace)
+// 	serviceAccount := &v1.ServiceAccount{}
+// 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, serviceAccount); err != nil {
+// 		return fmt.Errorf("failed to convert unstructured object to ServiceAccount: %w", err)
+// 	}
+// 	_, err := serviceAccountClient.Update(serviceAccount, metav1.UpdateOptions{})
+// 	if err != nil {
+// 		_, err = serviceAccountClient.Create(serviceAccount, metav1.CreateOptions{})
+// 	}
+// 	return err
+// }
 
 func autoscaleDeployment(deploymentName string, cpuPercent string, minReplicas, maxReplicas int) {
 	cmd := exec.Command("kubectl", "autoscale", "deployment", deploymentName,
