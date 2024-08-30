@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
@@ -78,18 +79,38 @@ var startCmd = &cobra.Command{
 		fmt.Println("start called")
 		// Check if cluster is running then apply manifest files and start autoscalling
 
-		fmt.Println(users, hpaCPUPercentage)
-		fmt.Printf("before config and clientset")
+		clientset, err := createClientset()
+		if err != nil {
+			fmt.Printf("Error creating clientset: %v\n", err)
+			return
+		}
+		fmt.Printf("1")
 
-		kubeconfig := "/path/to/your/kubeconfig" // Provide the path to your kubeconfig file
-		config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+		// Example: List all Pods in the "default" namespace
+		pods, err := clientset.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
-			panic(err.Error())
+			fmt.Printf("Error listing pods: %v\n", err)
+			return
 		}
-		clientset, err = kubernetes.NewForConfig(config)
-		if err != nil {
-			panic(err.Error())
+		fmt.Printf("2")
+
+		fmt.Println("Pods in the default namespace:")
+		for _, pod := range pods.Items {
+			fmt.Printf("- %s\n", pod.Name)
 		}
+		fmt.Printf("3")
+
+		// fmt.Println(users, hpaCPUPercentage)
+		// fmt.Printf("before config and clientset")
+
+		// config, err := rest.InClusterConfig()
+		// if err != nil {
+		// 	panic(err.Error())
+		// }
+		// clientset, err = kubernetes.NewForConfig(config)
+		// if err != nil {
+		// 	panic(err.Error())
+		// }
 
 		fmt.Printf("after config and clientset")
 
@@ -333,6 +354,45 @@ func init() {
 	rootCmd.AddCommand(startCmd)
 }
 
+func getKubeConfig() (*rest.Config, error) {
+	var config *rest.Config
+	var err error
+
+	// Try to load in-cluster config
+	config, err = rest.InClusterConfig()
+	if err != nil {
+		// Fallback to kubeconfig file
+		kubeconfig := filepath.Join(homeDir(), ".kube", "config")
+		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load kubeconfig: %v", err)
+		}
+	}
+
+	return config, nil
+}
+
+func homeDir() string {
+	if h := os.Getenv("HOME"); h != "" {
+		return h
+	}
+	return os.Getenv("USERPROFILE") // windows
+}
+
+func createClientset() (*kubernetes.Clientset, error) {
+	config, err := getKubeConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the Clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Kubernetes clientset: %v", err)
+	}
+
+	return clientset, nil
+}
 func isKubernetesClusterRunning() bool {
 	// cmd := exec.Command("kubectl", "cluster-info")
 
