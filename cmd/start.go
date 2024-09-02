@@ -441,20 +441,20 @@ func applyResources(yamlData string, config *rest.Config, clientset *kubernetes.
 		resource = strings.TrimSpace(resource)
 		fmt.Println("c")
 		fmt.Println(resource)
-		if len(strings.TrimSpace(resource)) == 0 {
+		if len(resource) == 0 {
 			continue
 		}
 
 		fmt.Println("d")
-		// Decode the YAML into an unstructured object
+		// Decode the YAML into a map[string]interface{}
 		var rawObj map[string]interface{}
 		err := yaml.Unmarshal([]byte(resource), &rawObj)
 		if err != nil {
 			return fmt.Errorf("error unmarshaling resource into rawObj: %v", err)
 		}
-		fmt.Printf("Raw Object: %+v\n", rawObj)
 
-		obj := &unstructured.Unstructured{Object: rawObj}
+		// Convert map[interface{}]interface{} to map[string]interface{}
+		obj := &unstructured.Unstructured{Object: convertToMapStringInterface(rawObj)}
 		fmt.Println("e")
 
 		gvk := obj.GroupVersionKind()
@@ -480,6 +480,30 @@ func applyResources(yamlData string, config *rest.Config, clientset *kubernetes.
 	}
 	fmt.Println("g")
 	return nil
+}
+
+func convertToMapStringInterface(m map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	for k, v := range m {
+		switch typedValue := v.(type) {
+		case map[interface{}]interface{}:
+			result[k] = convertToMapStringInterface(convertMapInterfaceToString(typedValue))
+		case map[string]interface{}:
+			result[k] = convertToMapStringInterface(typedValue)
+		default:
+			result[k] = v
+		}
+	}
+	return result
+}
+
+func convertMapInterfaceToString(m map[interface{}]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	for k, v := range m {
+		key := fmt.Sprintf("%v", k)
+		result[key] = v
+	}
+	return result
 }
 
 // func getKubeConfig() (*rest.Config, error) {
