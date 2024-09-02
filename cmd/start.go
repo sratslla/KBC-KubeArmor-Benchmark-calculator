@@ -114,11 +114,11 @@ var startCmd = &cobra.Command{
 
 		fmt.Printf("after config and clientset")
 
-		if isKubernetesClusterRunning() {
-			fmt.Println("Kubernetes cluster is running ")
-		} else {
-			fmt.Println("Kubernetes cluster is not running or accessible")
-		}
+		// if isKubernetesClusterRunning() {
+		// 	fmt.Println("Kubernetes cluster is running ")
+		// } else {
+		// 	fmt.Println("Kubernetes cluster is not running or accessible")
+		// }
 		REPO_URL := "https://raw.githubusercontent.com/sratslla/KBC-KubeArmor-Benchmark-calculator/main/manifests"
 		manifestPaths := []string{
 			"kubernetes-manifests.yaml",
