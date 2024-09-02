@@ -81,10 +81,10 @@ var startCmd = &cobra.Command{
 
 		clientset, err := createClientset()
 		if err != nil {
-			fmt.Printf("Error creating clientset: %v\n", err)
+			fmt.Println("Error creating clientset: %v\n", err)
 			return
 		}
-		fmt.Printf("1")
+		fmt.Println("1")
 
 		// Example: List all Pods in the "default" namespace
 		pods, err := clientset.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
@@ -92,13 +92,13 @@ var startCmd = &cobra.Command{
 			fmt.Printf("Error listing pods: %v\n", err)
 			return
 		}
-		fmt.Printf("2")
+		fmt.Println("2")
 
 		fmt.Println("Pods in the default namespace:")
 		for _, pod := range pods.Items {
 			fmt.Printf("- %s\n", pod.Name)
 		}
-		fmt.Printf("3")
+		fmt.Println("3")
 
 		// fmt.Println(users, hpaCPUPercentage)
 		// fmt.Printf("before config and clientset")
@@ -411,6 +411,7 @@ func isKubernetesClusterRunning() bool {
 
 func applyManifestFromGitHub(repoURL, manifestPath string) error {
 	// Fetch the YAML manifest file from GitHub
+	fmt.Println("INside applyManifestFromGitHub")
 	resp, err := http.Get(fmt.Sprintf("%s/%s", repoURL, manifestPath))
 	if err != nil {
 		return fmt.Errorf("error fetching manifest file: %v", err)
