@@ -19,6 +19,7 @@ import (
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/discovery"
@@ -442,20 +443,22 @@ func applyResources(yamlData string, config *rest.Config, clientset *kubernetes.
 			continue
 		}
 
+		fmt.Println("d")
 		// Decode the YAML into an unstructured object
 		obj := &unstructured.Unstructured{}
-		_, _, err := unstructured.UnstructuredJSONScheme.Decode([]byte(resource), nil, obj)
+		err := yaml.Unmarshal([]byte(resource), obj)
 		if err != nil {
 			return err
 		}
 
 		// Find the GVR for the resource
+		fmt.Println("e")
 		gvk := obj.GroupVersionKind()
 		m, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 		if err != nil {
 			return err
 		}
-
+		fmt.Println("f")
 		// Apply the resource using the dynamic client
 		resourceInterface := dynamicClient.Resource(m.Resource).Namespace(obj.GetNamespace())
 		_, err = resourceInterface.Create(context, obj, metav1.CreateOptions{})
@@ -465,7 +468,7 @@ func applyResources(yamlData string, config *rest.Config, clientset *kubernetes.
 
 		fmt.Printf("Applied %s %s\n", gvk.Kind, obj.GetName())
 	}
-	fmt.Println("d")
+	fmt.Println("g")
 	return nil
 }
 
