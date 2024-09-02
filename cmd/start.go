@@ -445,20 +445,26 @@ func applyResources(yamlData string, config *rest.Config, clientset *kubernetes.
 
 		fmt.Println("d")
 		// Decode the YAML into an unstructured object
-		obj := &unstructured.Unstructured{}
-		err := yaml.Unmarshal([]byte(resource), obj)
+		var rawObj map[string]interface{}
+		err := yaml.Unmarshal([]byte(resource), &rawObj)
 		if err != nil {
-			return err
+			return fmt.Errorf("error unmarshaling resource into rawObj: %v", err)
 		}
-		fmt.Printf("Unmarshaled Object: %+v\n", obj)
+		fmt.Printf("Raw Object: %+v\n", rawObj)
 
-		// Find the GVR for the resource
+		obj := &unstructured.Unstructured{Object: rawObj}
 		fmt.Println("e")
+
 		gvk := obj.GroupVersionKind()
-		fmt.Printf("GVK: %+v\n", gvk) // Log the GVK
+		fmt.Printf("GVK: %+v\n", gvk)
+
+		if gvk.Kind == "" || gvk.Version == "" {
+			return fmt.Errorf("GVK is empty: %+v", gvk)
+		}
+
 		m, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 		if err != nil {
-			return err
+			return fmt.Errorf("error getting REST mapping for GVK %+v: %v", gvk, err)
 		}
 		fmt.Println("f")
 		// Apply the resource using the dynamic client
