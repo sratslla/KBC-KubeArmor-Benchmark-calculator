@@ -450,10 +450,12 @@ func applyResources(yamlData string, config *rest.Config, clientset *kubernetes.
 		if err != nil {
 			return err
 		}
+		fmt.Printf("Unmarshaled Object: %+v\n", obj)
 
 		// Find the GVR for the resource
 		fmt.Println("e")
 		gvk := obj.GroupVersionKind()
+		fmt.Printf("GVK: %+v\n", gvk) // Log the GVK
 		m, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 		if err != nil {
 			return err
