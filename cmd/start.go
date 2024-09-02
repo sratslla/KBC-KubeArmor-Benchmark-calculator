@@ -438,7 +438,8 @@ func applyResources(yamlData string, config *rest.Config, clientset *kubernetes.
 	resources := strings.Split(yamlData, "---")
 	fmt.Println("b")
 	for _, resource := range resources {
-		fmt.Println("c", resource)
+		fmt.Println("c")
+		fmt.Println(resource)
 		if len(strings.TrimSpace(resource)) == 0 {
 			continue
 		}
