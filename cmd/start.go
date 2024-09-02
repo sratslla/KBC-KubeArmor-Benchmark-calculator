@@ -428,14 +428,16 @@ func applyResources(yamlData string, config *rest.Config, clientset *kubernetes.
 	if err != nil {
 		return err
 	}
-
+	fmt.Println("a")
 	// Create a RESTMapper to map resources to GVRs
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(discoveryClient))
 	context := context.TODO()
 
 	// Split the YAML into individual resource definitions
 	resources := strings.Split(yamlData, "---")
+	fmt.Println("b")
 	for _, resource := range resources {
+		fmt.Println("c")
 		if len(strings.TrimSpace(resource)) == 0 {
 			continue
 		}
@@ -463,7 +465,7 @@ func applyResources(yamlData string, config *rest.Config, clientset *kubernetes.
 
 		fmt.Printf("Applied %s %s\n", gvk.Kind, obj.GetName())
 	}
-
+	fmt.Println("d")
 	return nil
 }
 
