@@ -490,6 +490,8 @@ func convertToMapStringInterface(m map[string]interface{}) map[string]interface{
 			result[k] = convertToMapStringInterface(convertMapInterfaceToString(typedValue))
 		case map[string]interface{}:
 			result[k] = convertToMapStringInterface(typedValue)
+		case []interface{}:
+			result[k] = convertSliceInterfaceToString(typedValue)
 		default:
 			result[k] = v
 		}
@@ -501,7 +503,33 @@ func convertMapInterfaceToString(m map[interface{}]interface{}) map[string]inter
 	result := make(map[string]interface{})
 	for k, v := range m {
 		key := fmt.Sprintf("%v", k)
-		result[key] = v
+		switch typedValue := v.(type) {
+		case map[interface{}]interface{}:
+			result[key] = convertToMapStringInterface(convertMapInterfaceToString(typedValue))
+		case map[string]interface{}:
+			result[key] = convertToMapStringInterface(typedValue)
+		case []interface{}:
+			result[key] = convertSliceInterfaceToString(typedValue)
+		default:
+			result[key] = v
+		}
+	}
+	return result
+}
+
+func convertSliceInterfaceToString(slice []interface{}) []interface{} {
+	result := make([]interface{}, len(slice))
+	for i, v := range slice {
+		switch typedValue := v.(type) {
+		case map[interface{}]interface{}:
+			result[i] = convertToMapStringInterface(convertMapInterfaceToString(typedValue))
+		case map[string]interface{}:
+			result[i] = convertToMapStringInterface(typedValue)
+		case []interface{}:
+			result[i] = convertSliceInterfaceToString(typedValue)
+		default:
+			result[i] = v
+		}
 	}
 	return result
 }
