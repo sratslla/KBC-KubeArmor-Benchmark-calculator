@@ -1,5 +1,5 @@
 provider "google" {
-  project = "kbc-1-426708"
+  project = "kubearmor-439615"
   region  = "us-central1"
 }
 
