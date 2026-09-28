@@ -1,6 +1,31 @@
+# SPDX-License-Identifier: Apache-2.0
+
+variable "project" {
+  type        = string
+  description = "GCP project id"
+}
+
+variable "region" {
+  type        = string
+  description = "GCP region"
+  default     = "us-central1"
+}
+
+variable "zone" {
+  type        = string
+  description = "GCP zone"
+  default     = "us-central1-c"
+}
+
+variable "cluster_name" {
+  type        = string
+  description = "GKE cluster name"
+  default     = "kbc-benchmark"
+}
+
 provider "google" {
-  project = "kubearmor-439615"
-  region  = "us-central1"
+  project = var.project
+  region  = var.region
 }
 
 resource "random_id" "suffix" {
@@ -8,10 +33,10 @@ resource "random_id" "suffix" {
 }
 
 resource "google_container_cluster" "primary" {
-  name               = "example-cluster"
-  location           = "us-central1-c"
-  initial_node_count        = 1
-  remove_default_node_pool  = true
+  name                     = var.cluster_name
+  location                 = var.zone
+  initial_node_count       = 1
+  remove_default_node_pool = true
 }
 
 resource "google_container_node_pool" "primary_nodes" {
@@ -44,8 +69,8 @@ resource "google_container_node_pool" "tainted_node" {
   }
 }
 
-resource "google_compute_firewall" "allow_node_port"{
-  name    = "test-node-port-${random_id.suffix.hex}"
+resource "google_compute_firewall" "allow_node_port" {
+  name    = "kbc-node-port-${random_id.suffix.hex}"
   network = "default"
 
   allow {
@@ -60,4 +85,8 @@ resource "google_compute_firewall" "allow_node_port"{
 
 output "kubernetes_cluster_name" {
   value = google_container_cluster.primary.name
+}
+
+output "kubernetes_cluster_zone" {
+  value = google_container_cluster.primary.location
 }

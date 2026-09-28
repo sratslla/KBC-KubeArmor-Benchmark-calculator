@@ -1,0 +1,78 @@
+name: KBC Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply_terraform:
+        description: "Apply Terraform GKE cluster before running"
+        type: boolean
+        default: false
+      profile:
+        description: "Benchmark profile"
+        type: string
+        default: release
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 720
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Authenticate to Google Cloud
+        if: ${{ inputs.apply_terraform }}
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        if: ${{ inputs.apply_terraform }}
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Terraform apply
+        if: ${{ inputs.apply_terraform }}
+        working-directory: deploy/terraform
+        run: |
+          terraform init
+          terraform apply -auto-approve \
+            -var="project=${{ secrets.GCP_PROJECT_ID }}"
+
+      - name: Get GKE credentials
+        if: ${{ inputs.apply_terraform }}
+        run: |
+          gcloud container clusters get-credentials kbc-benchmark \
+            --zone us-central1-c \
+            --project ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Build kbc
+        run: go build -o kbc ./cmd/kbc
+
+      - name: Run benchmark
+        run: |
+          ./kbc run --profile=${{ inputs.profile }} --out=./out
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kbc-report
+          path: |
+            out/
+            final_report.md
+            final_report.json
+            checkpoint.json

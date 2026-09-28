@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kbc-runner
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kbc-runner
+rules:
+  - apiGroups: ["", "apps", "autoscaling", "batch"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["security.kubearmor.com"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["operator.kubearmor.com"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kbc-runner
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kbc-runner
+subjects:
+  - kind: ServiceAccount
+    name: kbc-runner
+    namespace: default
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kbc-runner
+  namespace: default
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      serviceAccountName: kbc-runner
+      restartPolicy: Never
+      containers:
+        - name: kbc
+          image: ghcr.io/kubearmor/kbc:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - run
+            - --profile=release
+            - --manifests-dir=/configs/deploy/manifests
+            - --configs-dir=/configs/configs
+            - --out=/out
+            - --prometheus-url=http://prometheus-service.monitoring.svc:8080
+          volumeMounts:
+            - name: out
+              mountPath: /out
+      volumes:
+        - name: out
+          emptyDir: {}

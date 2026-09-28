@@ -1,7 +1,13 @@
+/kbc
+/out/
+/final_report.md
+/final_report.json
+/checkpoint.json
 data.json
 result.md
-exec1.go
-exec2.go
-exec3.go
-exec4.go
 test.md
+tmp/
+*.exe
+*.test
+.idea/
+.vscode/

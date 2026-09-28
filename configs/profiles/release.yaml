@@ -1,0 +1,185 @@
+# Exact Data-page fidelity profile for KubeArmor performance benchmarking.
+name: release
+users: 2000
+spawn_rate: 1
+cpu_percent: 50
+stabilize: 12m
+samples: 5
+sample_every: 1m
+namespace: default
+
+scenarios:
+  # --- Baseline (before KubeArmor install) ---
+  - id: baseline
+    section: Without KubeArmor
+    description: without kubearmor
+    kubearmor: off
+    clear_policies: true
+
+  # --- BPF LSM policy ladder ---
+  - id: bpf-no-policy
+    section: BPF LSM
+    description: with Kubearmor (without policy)
+    kubearmor: on
+    lsm_order: bpf,apparmor,selinux
+    default_visibility: process,network
+    require_enforcer: bpf
+    visibility: process,network
+    clear_policies: true
+
+  - id: bpf-process
+    section: BPF LSM
+    description: with Kubearmor (with process policy)
+    kubearmor: on
+    lsm_order: bpf,apparmor,selinux
+    require_enforcer: bpf
+    visibility: process,network
+    clear_policies: true
+    policies: [process]
+
+  - id: bpf-process-network
+    section: BPF LSM
+    description: with Kubearmor (with process, network policy)
+    kubearmor: on
+    lsm_order: bpf,apparmor,selinux
+    require_enforcer: bpf
+    visibility: process,network
+    clear_policies: true
+    policies: [process, network]
+
+  - id: bpf-process-network-file
+    section: BPF LSM
+    description: with Kubearmor (with process, network, file policy)
+    kubearmor: on
+    lsm_order: bpf,apparmor,selinux
+    require_enforcer: bpf
+    visibility: process,network
+    clear_policies: true
+    policies: [process, network, file]
+
+  # --- Pure AppArmor without system monitor (visibility none) ---
+  - id: apparmor-no-policy
+    section: AppArmor Pure
+    description: with Kubearmor (without policy)
+    kubearmor: on
+    lsm_order: apparmor,bpf,selinux
+    default_visibility: none
+    require_enforcer: apparmor
+    visibility: none
+    clear_policies: true
+
+  - id: apparmor-process
+    section: AppArmor Pure
+    description: with Kubearmor (with process policy)
+    kubearmor: on
+    lsm_order: apparmor,bpf,selinux
+    default_visibility: none
+    require_enforcer: apparmor
+    visibility: none
+    clear_policies: true
+    policies: [process]
+
+  - id: apparmor-process-network
+    section: AppArmor Pure
+    description: with Kubearmor (with process, network policy)
+    kubearmor: on
+    lsm_order: apparmor,bpf,selinux
+    default_visibility: none
+    require_enforcer: apparmor
+    visibility: none
+    clear_policies: true
+    policies: [process, network]
+
+  - id: apparmor-process-network-file
+    section: AppArmor Pure
+    description: with Kubearmor (with process, network, file policy)
+    kubearmor: on
+    lsm_order: apparmor,bpf,selinux
+    default_visibility: none
+    require_enforcer: apparmor
+    visibility: none
+    clear_policies: true
+    policies: [process, network, file]
+
+  # --- System monitor on, visibility none + policies ---
+  - id: sysmon-none-no-policy
+    section: System Monitor Visibility None
+    description: with Kubearmor (without policy)
+    kubearmor: on
+    lsm_order: bpf,apparmor,selinux
+    default_visibility: none
+    require_enforcer: bpf
+    visibility: none
+    clear_policies: true
+
+  - id: sysmon-none-process
+    section: System Monitor Visibility None
+    description: with Kubearmor (with process policy)
+    kubearmor: on
+    lsm_order: bpf,apparmor,selinux
+    require_enforcer: bpf
+    visibility: none
+    clear_policies: true
+    policies: [process]
+
+  - id: sysmon-none-process-network
+    section: System Monitor Visibility None
+    description: with Kubearmor (with process, network policy)
+    kubearmor: on
+    lsm_order: bpf,apparmor,selinux
+    require_enforcer: bpf
+    visibility: none
+    clear_policies: true
+    policies: [process, network]
+
+  - id: sysmon-none-process-network-file
+    section: System Monitor Visibility None
+    description: with Kubearmor (with process, network, file policy)
+    kubearmor: on
+    lsm_order: bpf,apparmor,selinux
+    require_enforcer: bpf
+    visibility: none
+    clear_policies: true
+    policies: [process, network, file]
+
+  # --- Visibility matrix ---
+  - id: visibility-none
+    section: Visibility Modes
+    description: "with Kubearmor (visibility: none)"
+    kubearmor: on
+    lsm_order: bpf,apparmor,selinux
+    require_enforcer: bpf
+    visibility: none
+    clear_policies: true
+
+  - id: visibility-process
+    section: Visibility Modes
+    description: "with Kubearmor (visibility: process)"
+    kubearmor: on
+    require_enforcer: bpf
+    visibility: process
+    clear_policies: true
+
+  - id: visibility-process-file
+    section: Visibility Modes
+    description: "with Kubearmor (visibility: process, file)"
+    kubearmor: on
+    require_enforcer: bpf
+    visibility: "process,file"
+    clear_policies: true
+
+  - id: visibility-process-network
+    section: Visibility Modes
+    description: "with Kubearmor (visibility: process, network)"
+    kubearmor: on
+    require_enforcer: bpf
+    visibility: "process,network"
+    clear_policies: true
+
+  - id: visibility-process-network-file
+    section: Visibility Modes
+    description: "with Kubearmor (visibility: process, network, file)"
+    kubearmor: on
+    require_enforcer: bpf
+    visibility: "process,network,file"
+    clear_policies: true
